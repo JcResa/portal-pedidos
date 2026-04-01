@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { supabase } from "./supabase";
 
 const ROLES = {
   empleado:    { label:"Empleado",      color:"#AFA9EC", bg:"#EEEDFE", text:"#3C3489" },
@@ -23,25 +24,8 @@ const ECOLOR = {
   "Cancelado":                { bg:"#FAECE7", text:"#712B13", btn:"#F0997B" },
 };
 
-const initUsers = [
-  { id:1, name:"Ana García",    role:"empleado",    email:"ana@empresa.com",    password:"ana123"   },
-  { id:2, name:"Luis Martín",   role:"empleado",    email:"luis@empresa.com",   password:"luis123"  },
-  { id:3, name:"Sara López",    role:"responsable", email:"sara@empresa.com",   password:"sara123"  },
-  { id:4, name:"Proveedor TI",  role:"proveedor",   email:"info@proveedor.com", password:"prov123"  },
-  { id:5, name:"Admin Sistema", role:"admin",       email:"admin@empresa.com",  password:"admin123" },
-];
-const initOrders = [
-  { id:"PED-001", producto:"MacBook Pro 14\"", categoria:"Ordenador",  cantidad:2, precio:2499, solicitante:"Ana García",  estado:"En preparación",        fechaSolicitud:"2026-03-10", fechaEstimada:"2026-04-01", fechaEntrega:"", tracking:"TRK-88231", notas:"Urgente para nuevo equipo", notasIncidencia:"" },
-  { id:"PED-002", producto:"Magic Mouse",      categoria:"Periférico", cantidad:5, precio:89,   solicitante:"Luis Martín", estado:"Nuevo pedido",          fechaSolicitud:"2026-03-18", fechaEstimada:"2026-03-28", fechaEntrega:"", tracking:"",          notas:"", notasIncidencia:"" },
-  { id:"PED-003", producto:"iPhone 15 Pro",    categoria:"Teléfono",   cantidad:3, precio:1199, solicitante:"Ana García",  estado:"Enviado / en tránsito", fechaSolicitud:"2026-03-05", fechaEstimada:"2026-03-25", fechaEntrega:"", tracking:"TRK-77410", notas:"Para directivos", notasIncidencia:"" },
-  { id:"PED-004", producto:"Monitor LG 27\"",  categoria:"Periférico", cantidad:4, precio:449,  solicitante:"Luis Martín", estado:"Entregado",             fechaSolicitud:"2026-02-20", fechaEstimada:"2026-03-10", fechaEntrega:"10-03-2026", tracking:"TRK-55902", notas:"", notasIncidencia:"" },
-  { id:"PED-005", producto:"iPad Air",         categoria:"Tablet",     cantidad:1, precio:799,  solicitante:"Ana García",  estado:"Cancelado",             fechaSolicitud:"2026-03-01", fechaEstimada:"",           fechaEntrega:"", tracking:"", notas:"Presupuesto cancelado", notasIncidencia:"" },
-  { id:"PED-006", producto:"Teclado Logitech", categoria:"Periférico", cantidad:3, precio:129,  solicitante:"Luis Martín", estado:"Nuevo pedido",          fechaSolicitud:"2026-03-20", fechaEstimada:"2026-03-30", fechaEntrega:"", tracking:"", notas:"", notasIncidencia:"" },
-];
-
-const fmtDate  = () => { const d=new Date(); return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`; };
-const nextId   = (orders) => "PED-"+String(Math.max(0,...orders.map(o=>parseInt(o.id.split("-")[1])))+1).padStart(3,"0");
-const nextUid  = (users)  => Math.max(0,...users.map(u=>u.id))+1;
+const fmtDate = () => { const d=new Date(); return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`; };
+const nextPedidoId = (orders) => "PED-"+String(Math.max(0,...orders.map(o=>parseInt(o.id.split("-")[1]||0)))+1).padStart(3,"0");
 
 const canTransition = (role, from, to) => {
   if (from==="Cancelado") return false;
@@ -64,58 +48,43 @@ const canTransition = (role, from, to) => {
   if (role==="empleado"||role==="responsable") return from==="Enviado / en tránsito" && to==="Entregado";
   return false;
 };
-const nextStates = (role, cur) => ESTADOS.filter(s => s!==cur && canTransition(role,cur,s));
+const nextStates = (role, cur) => ESTADOS.filter(s=>s!==cur&&canTransition(role,cur,s));
 
-const Pill = ({estado}) => {
-  const c = ECOLOR[estado]||{bg:"#F1EFE8",text:"#444441"};
-  return <span style={{background:c.bg,color:c.text,fontSize:11,fontWeight:500,padding:"2px 10px",borderRadius:20,whiteSpace:"nowrap"}}>{estado}</span>;
-};
-const Avatar = ({name,role,size=38}) => {
-  const r = ROLES[role]||ROLES.empleado;
-  const ini = name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-  return <div style={{width:size,height:size,borderRadius:"50%",background:r.bg,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.35,fontWeight:500,color:r.text}}>{ini}</div>;
-};
-const Toast = ({msg,type}) => (
-  <div style={{position:"fixed",top:16,right:16,zIndex:999,background:type==="ok"?"#E1F5EE":"#FBEAF0",color:type==="ok"?"#085041":"#72243E",padding:"10px 18px",borderRadius:10,fontSize:13,fontWeight:500,border:`0.5px solid ${type==="ok"?"#9FE1CB":"#F4C0D1"}`}}>{msg}</div>
-);
-const DarkToggle = ({dark,onToggle}) => (
-  <button onClick={onToggle} style={{width:32,height:32,borderRadius:"50%",border:"0.5px solid rgba(128,128,128,0.25)",background:dark?"#3a3a36":"#eeece7",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-    {dark?"☀️":"🌙"}
-  </button>
-);
-const PulseBar = () => (
-  <>
-    <style>{`@keyframes barPulse{0%,100%{opacity:1;width:6px;background:#534AB7;}50%{opacity:0.85;width:10px;background:#AFA9EC;}}`}</style>
-    <div style={{position:"absolute",left:0,top:0,bottom:0,width:6,borderRadius:"12px 0 0 12px",background:"#534AB7",animation:"barPulse 1s ease-in-out infinite"}}/>
-  </>
-);
+const Pill = ({estado}) => { const c=ECOLOR[estado]||{bg:"#F1EFE8",text:"#444441"}; return <span style={{background:c.bg,color:c.text,fontSize:11,fontWeight:500,padding:"2px 10px",borderRadius:20,whiteSpace:"nowrap"}}>{estado}</span>; };
+const Avatar = ({name,role,size=38}) => { const r=ROLES[role]||ROLES.empleado; const ini=name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(); return <div style={{width:size,height:size,borderRadius:"50%",background:r.bg,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.35,fontWeight:500,color:r.text}}>{ini}</div>; };
+const Toast = ({msg,type}) => <div style={{position:"fixed",top:16,right:16,zIndex:999,background:type==="ok"?"#E1F5EE":"#FBEAF0",color:type==="ok"?"#085041":"#72243E",padding:"10px 18px",borderRadius:10,fontSize:13,fontWeight:500,border:`0.5px solid ${type==="ok"?"#9FE1CB":"#F4C0D1"}`}}>{msg}</div>;
+const DarkToggle = ({dark,onToggle}) => <button onClick={onToggle} style={{width:32,height:32,borderRadius:"50%",border:"0.5px solid rgba(128,128,128,0.25)",background:dark?"#3a3a36":"#eeece7",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{dark?"☀️":"🌙"}</button>;
+const PulseBar = () => (<><style>{`@keyframes barPulse{0%,100%{opacity:1;width:6px;background:#534AB7;}50%{opacity:0.85;width:10px;background:#AFA9EC;}}`}</style><div style={{position:"absolute",left:0,top:0,bottom:0,width:6,borderRadius:"12px 0 0 12px",background:"#534AB7",animation:"barPulse 1s ease-in-out infinite"}}/></>);
 const BP = {background:"#AFA9EC",color:"#26215C",border:"none",borderRadius:8,padding:"8px 16px",fontSize:13,fontWeight:500,cursor:"pointer"};
+const Spinner = () => <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"3rem",color:"#9c9a92",fontSize:13}}>Cargando…</div>;
 
 function SectionHead({label,count,bg,border,dot,text,cBg,cText,collapsed,onToggle,pulsing}) {
-  return (
-    <>
-      <style>{`@keyframes headPulse{0%,100%{opacity:1;background:${bg}}50%{opacity:0.7;background:${cBg}20}}`}</style>
-      <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:10,marginBottom:collapsed?0:12,padding:"10px 14px",borderRadius:10,background:bg,border:`0.5px solid ${border}`,cursor:"pointer",userSelect:"none",animation:pulsing?"headPulse 1.4s ease-in-out infinite":"none",transition:"margin .2s"}}>
-        <span style={{width:10,height:10,borderRadius:"50%",background:dot,display:"inline-block",flexShrink:0}}></span>
-        <span style={{fontSize:13,fontWeight:500,color:text,flex:1}}>{label}</span>
-        <span style={{background:cBg,color:cText,fontSize:11,fontWeight:500,padding:"2px 10px",borderRadius:20,marginRight:6}}>{count}</span>
-        <span style={{fontSize:12,color:text,opacity:0.7,transition:"transform .2s",display:"inline-block",transform:collapsed?"rotate(-90deg)":"rotate(0deg)"}}>▾</span>
-      </div>
-    </>
-  );
+  return (<><style>{`@keyframes headPulse{0%,100%{opacity:1;background:${bg}}50%{opacity:0.7;background:${cBg}20}}`}</style>
+    <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:10,marginBottom:collapsed?0:12,padding:"10px 14px",borderRadius:10,background:bg,border:`0.5px solid ${border}`,cursor:"pointer",userSelect:"none",animation:pulsing?"headPulse 1.4s ease-in-out infinite":"none",transition:"margin .2s"}}>
+      <span style={{width:10,height:10,borderRadius:"50%",background:dot,display:"inline-block",flexShrink:0}}></span>
+      <span style={{fontSize:13,fontWeight:500,color:text,flex:1}}>{label}</span>
+      <span style={{background:cBg,color:cText,fontSize:11,fontWeight:500,padding:"2px 10px",borderRadius:20,marginRight:6}}>{count}</span>
+      <span style={{fontSize:12,color:text,opacity:0.7,transition:"transform .2s",display:"inline-block",transform:collapsed?"rotate(-90deg)":"rotate(0deg)"}}>▾</span>
+    </div></>);
 }
 
-function LoginForm({users,T,onLogin}) {
+function LoginForm({T, onLogin}) {
   const [email,setEmail]       = useState("");
   const [password,setPassword] = useState("");
   const [showPwd,setShowPwd]   = useState(false);
   const [error,setError]       = useState("");
+  const [loading,setLoading]   = useState(false);
   const inp = {padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
-  const handleLogin = () => {
-    const found = users.find(u=>u.email.toLowerCase()===email.toLowerCase()&&u.password===password);
-    if (found) { setError(""); onLogin(found); }
-    else setError("Email o contraseña incorrectos");
+
+  const handleLogin = async () => {
+    setLoading(true); setError("");
+    const { data, error: authErr } = await supabase.auth.signInWithPassword({ email, password });
+    if (authErr) { setError("Email o contraseña incorrectos"); setLoading(false); return; }
+    const { data: userData } = await supabase.from("usuarios").select("*").eq("id", data.user.id).single();
+    if (userData) onLogin(userData);
+    else { setError("Usuario no encontrado en la base de datos"); setLoading(false); }
   };
+
   return (
     <div>
       <div style={{marginBottom:14}}>
@@ -130,24 +99,19 @@ function LoginForm({users,T,onLogin}) {
         </div>
       </div>
       {error&&<div style={{fontSize:12,color:"#72243E",background:"#FBEAF0",padding:"8px 12px",borderRadius:8,marginTop:8,marginBottom:4}}>{error}</div>}
-      <div style={{fontSize:11,color:T.t3,margin:"12px 0 8px",lineHeight:1.8}}>
-        <strong style={{color:T.t2}}>Credenciales de prueba:</strong><br/>
-        ana@empresa.com / ana123 <span style={{color:T.t3}}>(empleado)</span><br/>
-        sara@empresa.com / sara123 <span style={{color:T.t3}}>(responsable)</span><br/>
-        info@proveedor.com / prov123 <span style={{color:T.t3}}>(proveedor)</span><br/>
-        admin@empresa.com / admin123 <span style={{color:T.t3}}>(admin)</span>
-      </div>
-      <button onClick={handleLogin} style={{...BP,width:"100%",padding:"11px",borderRadius:10,fontSize:14}}>Entrar</button>
+      <div style={{marginBottom:16}}></div>
+      <button onClick={handleLogin} disabled={loading} style={{...BP,width:"100%",padding:"11px",borderRadius:10,fontSize:14,opacity:loading?0.7:1}}>{loading?"Entrando…":"Entrar"}</button>
     </div>
   );
 }
 
 export default function App() {
-  const [dark,setDark]          = useState(false);
-  const [users,setUsers]        = useState(initUsers);
-  const [orders,setOrders]      = useState(initOrders);
+  const [dark,setDark]          = useState(()=>JSON.parse(localStorage.getItem("dark")||"false"));
   const [user,setUser]          = useState(null);
+  const [orders,setOrders]      = useState([]);
+  const [loading,setLoading]    = useState(false);
   const [tab,setTab]            = useState("pedidos");
+  const [users,setUsers]        = useState([]);
   const [selected,setSelected]  = useState(null);
   const [showForm,setShowForm]  = useState(false);
   const [filterEstado,setFilterEstado] = useState("Todos");
@@ -167,8 +131,39 @@ export default function App() {
     border:  dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.08)",
   };
 
-  const toggle    = (key) => setCollapsed(p=>({...p,[key]:!p[key]}));
+  useEffect(()=>{ localStorage.setItem("dark",JSON.stringify(dark)); },[dark]);
+
   const showToast = (msg,type="ok") => { setToast({msg,type}); setTimeout(()=>setToast(null),3000); };
+  const toggle    = (key) => setCollapsed(p=>({...p,[key]:!p[key]}));
+
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase.from("pedidos").select("*").order("created_at",{ascending:false});
+    if (data) setOrders(data.map(o=>({
+      id: o.id, producto: o.producto, categoria: o.categoria, cantidad: o.cantidad,
+      precio: o.precio, solicitante: o.solicitante, estado: o.estado,
+      fechaSolicitud: o.fecha_solicitud, fechaEstimada: o.fecha_estimada||"",
+      fechaEntrega: o.fecha_entrega||"", tracking: o.tracking||"",
+      notas: o.notas||"", notasIncidencia: o.notas_incidencia||"",
+    })));
+    setLoading(false);
+  },[]);
+
+  const loadUsers = useCallback(async () => {
+    const { data } = await supabase.from("usuarios").select("*");
+    if (data) setUsers(data);
+  },[]);
+
+  useEffect(()=>{ if(user){ loadOrders(); loadUsers(); } },[user,loadOrders,loadUsers]);
+
+  // Suscripción en tiempo real
+  useEffect(()=>{
+    if (!user) return;
+    const sub = supabase.channel("pedidos-changes")
+      .on("postgres_changes",{event:"*",schema:"public",table:"pedidos"},()=>loadOrders())
+      .subscribe();
+    return ()=>supabase.removeChannel(sub);
+  },[user,loadOrders]);
 
   const visible = useMemo(()=>{
     let r=orders;
@@ -179,18 +174,74 @@ export default function App() {
     return r;
   },[orders,user,filterEstado,filterCat,search]);
 
-  const updateOrder  = (id,ch)  => { setOrders(p=>p.map(o=>o.id===id?{...o,...ch}:o)); setSelected(p=>p?.id===id?{...p,...ch}:p); };
-  const deleteOrder  = (id)     => { setOrders(p=>p.filter(o=>o.id!==id)); setSelected(null); showToast("Pedido eliminado"); };
-  const changeEstado = (id,est) => { const ch={estado:est}; if(est==="Entregado") ch.fechaEntrega=fmtDate(); updateOrder(id,ch); showToast(`Estado → ${est}`); };
+  const updateOrder = async (id, changes) => {
+    const dbChanges = {};
+    if (changes.estado)          dbChanges.estado           = changes.estado;
+    if (changes.producto)        dbChanges.producto         = changes.producto;
+    if (changes.categoria)       dbChanges.categoria        = changes.categoria;
+    if (changes.cantidad)        dbChanges.cantidad         = changes.cantidad;
+    if (changes.precio!==undefined) dbChanges.precio        = changes.precio;
+    if (changes.solicitante)     dbChanges.solicitante      = changes.solicitante;
+    if (changes.fechaEstimada!==undefined) dbChanges.fecha_estimada = changes.fechaEstimada||null;
+    if (changes.fechaEntrega!==undefined)  dbChanges.fecha_entrega  = changes.fechaEntrega||"";
+    if (changes.tracking!==undefined)      dbChanges.tracking       = changes.tracking||"";
+    if (changes.notas!==undefined)         dbChanges.notas          = changes.notas||"";
+    if (changes.notasIncidencia!==undefined) dbChanges.notas_incidencia = changes.notasIncidencia||"";
+    await supabase.from("pedidos").update(dbChanges).eq("id",id);
+    setOrders(p=>p.map(o=>o.id===id?{...o,...changes}:o));
+    setSelected(p=>p?.id===id?{...p,...changes}:p);
+  };
 
-  const saveUser = (data) => {
-    if (data.id) { setUsers(p=>p.map(u=>u.id===data.id?data:u)); if(user.id===data.id) setUser(data); showToast("Usuario actualizado"); }
-    else { setUsers(p=>[...p,{...data,id:nextUid(users)}]); showToast("Usuario creado"); }
+  const deleteOrder = async (id) => {
+    await supabase.from("pedidos").delete().eq("id",id);
+    setOrders(p=>p.filter(o=>o.id!==id));
+    setSelected(null); showToast("Pedido eliminado");
+  };
+
+  const changeEstado = async (id, estado) => {
+    const changes = {estado};
+    if (estado==="Entregado") changes.fechaEntrega=fmtDate();
+    await updateOrder(id, changes);
+    showToast(`Estado → ${estado}`);
+  };
+
+  const createOrder = async (data) => {
+    const newId = nextPedidoId(orders);
+    const row = {
+      id: newId, producto: data.producto, categoria: data.categoria,
+      cantidad: data.cantidad, precio: data.precio||0,
+      solicitante: user.name, estado: "Nuevo pedido",
+      fecha_solicitud: new Date().toISOString().slice(0,10),
+      fecha_estimada: data.fechaEstimada||null,
+      tracking: "", fecha_entrega: "", notas: data.notas||"", notas_incidencia: "",
+    };
+    await supabase.from("pedidos").insert(row);
+    await loadOrders();
+    showToast("Pedido creado");
+  };
+
+  const saveUser = async (data) => {
+    if (data.id) {
+      await supabase.from("usuarios").update({name:data.name,email:data.email,role:data.role}).eq("id",data.id);
+      if (data.password) await supabase.auth.admin.updateUserById(data.id,{password:data.password});
+      setUsers(p=>p.map(u=>u.id===data.id?{...u,...data}:u));
+      if (user.id===data.id) setUser(d=>({...d,...data}));
+      showToast("Usuario actualizado");
+    } else {
+      const { data: authData, error } = await supabase.auth.signUp({email:data.email,password:data.password});
+      if (error) { showToast("Error al crear usuario: "+error.message,"err"); return; }
+      await supabase.from("usuarios").insert({id:authData.user.id,name:data.name,email:data.email,role:data.role});
+      await loadUsers();
+      showToast("Usuario creado — debe confirmar su email");
+    }
     setUserModal(null);
   };
-  const deleteUser = (id) => {
+
+  const deleteUser = async (id) => {
     if (id===user.id) { showToast("No puedes eliminarte","err"); return; }
-    setUsers(p=>p.filter(u=>u.id!==id)); showToast("Usuario eliminado");
+    await supabase.from("usuarios").delete().eq("id",id);
+    setUsers(p=>p.filter(u=>u.id!==id));
+    showToast("Usuario eliminado");
   };
 
   if (!user) return (
@@ -201,7 +252,7 @@ export default function App() {
           <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)}/>
         </div>
         <div style={{fontSize:13,color:T.t3,marginBottom:24}}>Introduce tus credenciales</div>
-        <LoginForm users={users} T={T} onLogin={u=>{setUser(u);setTab("pedidos");setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
+        <LoginForm T={T} onLogin={u=>{setUser(u);setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
       </div>
     </div>
   );
@@ -209,12 +260,7 @@ export default function App() {
   const nuevos      = user.role==="proveedor" ? visible.filter(o=>o.estado==="Nuevo pedido") : [];
   const enCurso     = visible.filter(o=>!["Entregado","Cancelado",...ESTADOS_PROVEEDOR_POST].includes(o.estado)&&(user.role!=="proveedor"||o.estado!=="Nuevo pedido"));
   const finalizados = visible.filter(o=>["Entregado","Cancelado",...ESTADOS_PROVEEDOR_POST].includes(o.estado));
-
-  const rp = (o,i,highlight=false,gc=null) => ({
-    order:o, user, idx:i, highlight, T, groupColors:gc,
-    onSelect:()=>setSelected(o),
-    onChangeEstado:est=>changeEstado(o.id,est),
-  });
+  const rp = (o,i,highlight=false,gc=null) => ({order:o,user,idx:i,highlight,T,groupColors:gc,onSelect:()=>setSelected(o),onChangeEstado:est=>changeEstado(o.id,est)});
 
   return (
     <div style={{minHeight:"100vh",background:T.bg,fontFamily:"system-ui,sans-serif"}}>
@@ -226,17 +272,15 @@ export default function App() {
             <span style={{fontSize:14,fontWeight:500,color:T.t1}}>Portal de pedidos</span>
           </div>
           <div style={{display:"flex",gap:2}}>
-            {["pedidos","usuarios"].map(t=>{
-              if (t==="usuarios"&&user.role!=="admin") return null;
-              return <button key={t} onClick={()=>setTab(t)} style={{fontSize:13,padding:"4px 12px",borderRadius:6,border:"none",cursor:"pointer",background:tab===t?"#EEEDFE":"transparent",color:tab===t?"#3C3489":T.t2,fontWeight:tab===t?500:400}}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>;
-            })}
+            {["pedidos","usuarios"].map(t=>{ if(t==="usuarios"&&user.role!=="admin") return null;
+              return <button key={t} onClick={()=>setTab(t)} style={{fontSize:13,padding:"4px 12px",borderRadius:6,border:"none",cursor:"pointer",background:tab===t?"#EEEDFE":"transparent",color:tab===t?"#3C3489":T.t2,fontWeight:tab===t?500:400}}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>;})}
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <span style={{fontSize:12,color:T.t2}}>{user.name}</span>
           <span style={{background:ROLES[user.role].bg,color:ROLES[user.role].text,fontSize:10,fontWeight:500,padding:"2px 9px",borderRadius:20}}>{ROLES[user.role].label}</span>
           <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)}/>
-          <button onClick={()=>{setUser(null);setSelected(null);}} style={{fontSize:11,color:T.t2,background:"none",border:`0.5px solid ${T.border}`,borderRadius:6,padding:"4px 10px",cursor:"pointer"}}>Salir</button>
+          <button onClick={async()=>{await supabase.auth.signOut();setUser(null);setSelected(null);}} style={{fontSize:11,color:T.t2,background:"none",border:`0.5px solid ${T.border}`,borderRadius:6,padding:"4px 10px",cursor:"pointer"}}>Salir</button>
         </div>
       </div>
 
@@ -256,59 +300,47 @@ export default function App() {
           {["admin","proveedor"].includes(user.role)&&(
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8,marginBottom:16}}>
               {[
-                {label:"Pedidos nuevos",  val:orders.filter(o=>o.estado==="Nuevo pedido").length,         bg:"#EEEDFE",text:"#3C3489"},
-                {label:"En preparación",  val:orders.filter(o=>o.estado==="En preparación").length,       bg:"#FAEEDA",text:"#633806"},
-                {label:"En tránsito",     val:orders.filter(o=>o.estado==="Enviado / en tránsito").length,bg:"#E6F1FB",text:"#0C447C"},
-                {label:"Entregados",      val:orders.filter(o=>o.estado==="Entregado").length,            bg:"#EAF3DE",text:"#27500A"},
-              ].map(s=>(
-                <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"12px 14px"}}>
-                  <div style={{fontSize:11,color:s.text,marginBottom:4}}>{s.label}</div>
-                  <div style={{fontSize:20,fontWeight:500,color:s.text}}>{s.val}</div>
-                </div>
-              ))}
+                {label:"Pedidos nuevos",  val:orders.filter(o=>o.estado==="Nuevo pedido").length,          bg:"#EEEDFE",text:"#3C3489"},
+                {label:"En preparación",  val:orders.filter(o=>o.estado==="En preparación").length,        bg:"#FAEEDA",text:"#633806"},
+                {label:"En tránsito",     val:orders.filter(o=>o.estado==="Enviado / en tránsito").length, bg:"#E6F1FB",text:"#0C447C"},
+                {label:"Entregados",      val:orders.filter(o=>o.estado==="Entregado").length,             bg:"#EAF3DE",text:"#27500A"},
+              ].map(s=><div key={s.label} style={{background:s.bg,borderRadius:10,padding:"12px 14px"}}><div style={{fontSize:11,color:s.text,marginBottom:4}}>{s.label}</div><div style={{fontSize:20,fontWeight:500,color:s.text}}>{s.val}</div></div>)}
             </div>
           )}
 
-          {visible.length===0&&<div style={{textAlign:"center",padding:"3rem",color:T.t3,fontSize:14}}>No hay pedidos que mostrar</div>}
-
-          {nuevos.length>0&&(
-            <div style={{marginBottom:24}}>
+          {loading ? <Spinner/> : <>
+            {visible.length===0&&<div style={{textAlign:"center",padding:"3rem",color:T.t3,fontSize:14}}>No hay pedidos que mostrar</div>}
+            {nuevos.length>0&&(<div style={{marginBottom:24}}>
               <SectionHead label="Nuevos pedidos pendientes" count={nuevos.length} bg="#EEEDFE" border="#AFA9EC" dot="#7F77DD" text="#3C3489" cBg="#3C3489" cText="#EEEDFE" collapsed={collapsed.nuevos} onToggle={()=>toggle("nuevos")} pulsing={true}/>
               {!collapsed.nuevos&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{nuevos.map((o,i)=><OrderRow key={o.id} {...rp(o,i,true)}/>)}</div>}
-            </div>
-          )}
-          {enCurso.length>0&&(
-            <div style={{marginBottom:24}}>
+            </div>)}
+            {enCurso.length>0&&(<div style={{marginBottom:24}}>
               <SectionHead label="Pedidos en curso" count={enCurso.length} bg="#E1F5EE" border="#9FE1CB" dot="#1D9E75" text="#085041" cBg="#085041" cText="#E1F5EE" collapsed={collapsed.curso} onToggle={()=>toggle("curso")} pulsing={false}/>
               {!collapsed.curso&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{enCurso.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,{light:"#E1F5EE",dark:"#C8EFE0",border:"#9FE1CB"})}/>)}</div>}
-            </div>
-          )}
-          {finalizados.length>0&&(
-            <div>
+            </div>)}
+            {finalizados.length>0&&(<div>
               <SectionHead label="Finalizados y cancelados" count={finalizados.length} bg="#FAECE7" border="#F0997B" dot="#D85A30" text="#712B13" cBg="#712B13" cText="#FAECE7" collapsed={collapsed.finalizados} onToggle={()=>toggle("finalizados")} pulsing={false}/>
               {!collapsed.finalizados&&<div style={{display:"flex",flexDirection:"column",gap:8,opacity:0.65,filter:"saturate(0.6)"}}>{finalizados.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,{light:"#FAECE7",dark:"#F5C4B3",border:"#F0997B"})}/>)}</div>}
-            </div>
-          )}
+            </div>)}
+          </>}
         </>}
 
-        {tab==="usuarios"&&user.role==="admin"&&(
-          <UsersPanel users={users} currentUser={user} T={T} onNew={()=>setUserModal("new")} onEdit={u=>setUserModal(u)} onDelete={deleteUser}/>
-        )}
+        {tab==="usuarios"&&user.role==="admin"&&<UsersPanel users={users} currentUser={user} T={T} onNew={()=>setUserModal("new")} onEdit={u=>setUserModal(u)} onDelete={deleteUser}/>}
       </div>
 
-      {selected&&<DetailPanel order={selected} user={user} T={T} onClose={()=>setSelected(null)} onUpdate={ch=>{updateOrder(selected.id,ch);showToast("Pedido actualizado");}} onDelete={()=>deleteOrder(selected.id)} onChangeEstado={est=>changeEstado(selected.id,est)}/>}
-      {showForm&&<NewOrderModal user={user} T={T} onClose={()=>setShowForm(false)} onCreate={data=>{setOrders(p=>[{...data,id:nextId(orders),solicitante:user.name,fechaSolicitud:new Date().toISOString().slice(0,10),estado:"Nuevo pedido",tracking:"",fechaEntrega:"",notasIncidencia:""},...p]);setShowForm(false);showToast("Pedido creado");}}/>}
+      {selected&&<DetailPanel order={selected} user={user} T={T} onClose={()=>setSelected(null)} onUpdate={async ch=>{await updateOrder(selected.id,ch);showToast("Pedido actualizado");}} onDelete={()=>deleteOrder(selected.id)} onChangeEstado={est=>changeEstado(selected.id,est)}/>}
+      {showForm&&<NewOrderModal user={user} T={T} onClose={()=>setShowForm(false)} onCreate={async data=>{await createOrder(data);setShowForm(false);}}/>}
       {userModal&&<UserModal userData={userModal==="new"?null:userModal} T={T} onSave={saveUser} onClose={()=>setUserModal(null)}/>}
     </div>
   );
 }
 
 function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEstado}) {
-  const next = nextStates(user.role,o.estado);
-  let bg, border;
-  if (highlight) { bg=idx%2===0?"#EEEDFE":"#E4E2F8"; border="1.5px solid #7F77DD"; }
-  else if (groupColors) { bg=idx%2===0?groupColors.light:groupColors.dark; border=`1.5px solid ${groupColors.border}`; }
-  else { bg=idx%2===0?T.surface:T.surf2; border=`0.5px solid ${T.border}`; }
+  const next=nextStates(user.role,o.estado);
+  let bg,border;
+  if (highlight){bg=idx%2===0?"#EEEDFE":"#E4E2F8";border="1.5px solid #7F77DD";}
+  else if (groupColors){bg=idx%2===0?groupColors.light:groupColors.dark;border=`1.5px solid ${groupColors.border}`;}
+  else{bg=idx%2===0?T.surface:T.surf2;border=`0.5px solid ${T.border}`;}
   return (
     <div style={{background:bg,border,borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",position:"relative",overflow:"hidden"}}>
       {highlight&&<PulseBar/>}
@@ -319,12 +351,10 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
       </div>
       {["admin","proveedor"].includes(user.role)&&<div style={{fontSize:12,color:T.t2,minWidth:100}}>{o.solicitante}</div>}
       <div style={{minWidth:80}}><Pill estado={o.estado}/></div>
-      <div style={{fontSize:11,color:T.t3,minWidth:100}}>
-        {o.estado==="Entregado"&&o.fechaEntrega?<span style={{color:"#27500A",fontWeight:500}}>Entregado {o.fechaEntrega}</span>:o.fechaEstimada?`Est. ${o.fechaEstimada}`:"—"}
-      </div>
+      <div style={{fontSize:11,color:T.t3,minWidth:100}}>{o.estado==="Entregado"&&o.fechaEntrega?<span style={{color:"#27500A",fontWeight:500}}>Entregado {o.fechaEntrega}</span>:o.fechaEstimada?`Est. ${o.fechaEstimada}`:"—"}</div>
       <div style={{display:"flex",gap:6,alignItems:"center"}}>
         {next.length>0&&(
-          <select defaultValue="" onChange={e=>{if(e.target.value){onChangeEstado(e.target.value);e.target.value="";} }} onClick={e=>e.stopPropagation()}
+          <select defaultValue="" onChange={e=>{if(e.target.value){onChangeEstado(e.target.value);e.target.value="";}}} onClick={e=>e.stopPropagation()}
             style={{fontSize:11,padding:"4px 8px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer",maxWidth:180}}>
             <option value="" disabled>→ Cambiar estado</option>
             {next.map(s=>{ const c=ECOLOR[s]; return <option key={s} value={s} style={{background:c.bg,color:c.text}}>→ {s}</option>;})}
@@ -337,15 +367,15 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
 }
 
 function DetailPanel({order:o,user,T,onClose,onUpdate,onDelete,onChangeEstado}) {
-  const [editing,setEditing] = useState(false);
-  const [form,setForm]       = useState({...o});
-  const next    = nextStates(user.role,o.estado);
-  const canEdit = user.role==="admin"||user.role==="proveedor";
-  const provKeys= ["tracking","fechaEstimada","notas","notasIncidencia"];
-  const editable= k=>editing&&(user.role==="admin"||provKeys.includes(k));
-  const save    = ()=>{ onUpdate(form); setEditing(false); };
-  const inp     = {padding:"8px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
-  const Field   = ({label,k,type="text",opts=null}) => (
+  const [editing,setEditing]=useState(false);
+  const [form,setForm]=useState({...o});
+  const next=nextStates(user.role,o.estado);
+  const canEdit=user.role==="admin"||user.role==="proveedor";
+  const provKeys=["tracking","fechaEstimada","notas","notasIncidencia"];
+  const editable=k=>editing&&(user.role==="admin"||provKeys.includes(k));
+  const save=async()=>{await onUpdate(form);setEditing(false);};
+  const inp={padding:"8px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
+  const Field=({label,k,type="text",opts=null})=>(
     <div style={{marginBottom:14}}>
       <div style={{fontSize:11,color:T.t3,marginBottom:4}}>{label}</div>
       {editable(k)?(opts?<select value={form[k]||""} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} style={inp}>{opts.map(v=><option key={v}>{v}</option>)}</select>:type==="textarea"?<textarea value={form[k]||""} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} rows={3} style={{...inp,resize:"vertical",height:"auto"}}/>:<input type={type} value={form[k]||""} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} style={inp}/>):<div style={{fontSize:14,color:T.t1}}>{form[k]||"—"}</div>}
@@ -359,28 +389,15 @@ function DetailPanel({order:o,user,T,onClose,onUpdate,onDelete,onChangeEstado}) 
           <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:T.t3}}>✕</button>
         </div>
         <Pill estado={o.estado}/>
-        {next.length>0&&(
-          <div>
-            <div style={{fontSize:11,color:T.t3,marginBottom:8}}>Cambiar estado</div>
-            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-              {next.map(s=>{ const c=ECOLOR[s]; return <button key={s} onClick={()=>{onChangeEstado(s);setForm(f=>({...f,estado:s}));}} style={{fontSize:12,padding:"5px 12px",borderRadius:20,border:`1px solid ${c.btn}`,background:c.bg,color:c.text,cursor:"pointer",fontWeight:500}}>→ {s}</button>;})}
-            </div>
-          </div>
-        )}
+        {next.length>0&&(<div><div style={{fontSize:11,color:T.t3,marginBottom:8}}>Cambiar estado</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{next.map(s=>{const c=ECOLOR[s];return <button key={s} onClick={()=>{onChangeEstado(s);setForm(f=>({...f,estado:s}));}} style={{fontSize:12,padding:"5px 12px",borderRadius:20,border:`1px solid ${c.btn}`,background:c.bg,color:c.text,cursor:"pointer",fontWeight:500}}>→ {s}</button>;})}</div></div>)}
         <hr style={{border:"none",borderTop:`0.5px solid ${T.border}`}}/>
-        <Field label="Producto" k="producto"/>
-        <Field label="Categoría" k="categoria" opts={CATEGORIAS}/>
-        <Field label="Cantidad" k="cantidad" type="number"/>
-        <Field label="Precio unitario (€)" k="precio" type="number"/>
+        <Field label="Producto" k="producto"/><Field label="Categoría" k="categoria" opts={CATEGORIAS}/><Field label="Cantidad" k="cantidad" type="number"/><Field label="Precio unitario (€)" k="precio" type="number"/>
         {form.precio>0&&<div style={{marginBottom:14}}><div style={{fontSize:11,color:T.t3,marginBottom:4}}>Importe total</div><div style={{fontSize:14,fontWeight:500,color:T.t1}}>€{(form.precio*form.cantidad).toLocaleString("es-ES")}</div></div>}
-        <Field label="Solicitante" k="solicitante"/>
-        <Field label="Fecha estimada" k="fechaEstimada" type="date"/>
-        <Field label="Nº seguimiento / albarán" k="tracking"/>
-        <Field label="Notas" k="notas" type="textarea"/>
+        <Field label="Solicitante" k="solicitante"/><Field label="Fecha estimada" k="fechaEstimada" type="date"/><Field label="Nº seguimiento / albarán" k="tracking"/><Field label="Notas" k="notas" type="textarea"/>
         {["En garantía / incidencia","Solucionado"].includes(form.estado)&&(
           <div style={{marginBottom:14}}>
             <div style={{fontSize:11,color:"#791F1F",marginBottom:4,fontWeight:500}}>Notas de incidencia / garantía</div>
-            {editing?<textarea value={form.notasIncidencia||""} onChange={e=>setForm(f=>({...f,notasIncidencia:e.target.value}))} rows={4} placeholder="Describe el problema, acciones tomadas, solución aplicada…" style={{...inp,resize:"vertical",height:"auto",border:"1px solid #F09595",background:"#FCEBEB"}}/>:<div style={{fontSize:13,color:"#791F1F",background:"#FCEBEB",borderRadius:8,padding:"10px 12px",border:"0.5px solid #F09595",minHeight:60,whiteSpace:"pre-wrap"}}>{form.notasIncidencia||<span style={{opacity:0.5}}>Sin notas de incidencia</span>}</div>}
+            {editing?<textarea value={form.notasIncidencia||""} onChange={e=>setForm(f=>({...f,notasIncidencia:e.target.value}))} rows={4} placeholder="Describe el problema…" style={{...inp,resize:"vertical",height:"auto",border:"1px solid #F09595",background:"#FCEBEB"}}/>:<div style={{fontSize:13,color:"#791F1F",background:"#FCEBEB",borderRadius:8,padding:"10px 12px",border:"0.5px solid #F09595",minHeight:60,whiteSpace:"pre-wrap"}}>{form.notasIncidencia||<span style={{opacity:0.5}}>Sin notas de incidencia</span>}</div>}
           </div>
         )}
         <div style={{display:"flex",gap:8,marginTop:"auto",paddingTop:16,borderTop:`0.5px solid ${T.border}`}}>
@@ -395,10 +412,12 @@ function DetailPanel({order:o,user,T,onClose,onUpdate,onDelete,onChangeEstado}) 
 }
 
 function NewOrderModal({user,T,onClose,onCreate}) {
-  const [form,setForm] = useState({producto:"",categoria:"Ordenador",cantidad:1,precio:"",fechaEstimada:"",notas:""});
-  const f     = (k,v) => setForm(p=>({...p,[k]:v}));
-  const valid = form.producto&&form.cantidad>0;
-  const inp   = {padding:"8px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
+  const [form,setForm]=useState({producto:"",categoria:"Ordenador",cantidad:1,precio:"",fechaEstimada:"",notas:""});
+  const [saving,setSaving]=useState(false);
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}));
+  const valid=form.producto&&form.cantidad>0;
+  const inp={padding:"8px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
+  const handle=async()=>{ if(!valid) return; setSaving(true); await onCreate(form); setSaving(false); };
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.3)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
       <div style={{background:T.surface,borderRadius:16,padding:"1.75rem",width:"100%",maxWidth:460,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
@@ -413,7 +432,7 @@ function NewOrderModal({user,T,onClose,onCreate}) {
         <div style={{marginBottom:20}}><div style={{fontSize:11,color:T.t3,marginBottom:4}}>Notas</div><textarea value={form.notas} onChange={e=>f("notas",e.target.value)} rows={3} style={{...inp,resize:"vertical",height:"auto"}}/></div>
         {form.precio>0&&form.cantidad>0&&<div style={{background:"#EEEDFE",borderRadius:8,padding:"10px 14px",marginBottom:16}}><span style={{fontSize:12,color:"#534AB7"}}>Importe total: </span><span style={{fontSize:14,fontWeight:500,color:"#3C3489"}}>€{(form.precio*form.cantidad).toLocaleString("es-ES")}</span></div>}
         <div style={{display:"flex",gap:8}}>
-          <button disabled={!valid} onClick={()=>valid&&onCreate(form)} style={{...BP,opacity:valid?1:0.5,cursor:valid?"pointer":"not-allowed"}}>Crear pedido</button>
+          <button disabled={!valid||saving} onClick={handle} style={{...BP,opacity:valid&&!saving?1:0.5,cursor:valid&&!saving?"pointer":"not-allowed"}}>{saving?"Guardando…":"Crear pedido"}</button>
           <button onClick={onClose} style={{padding:"8px 14px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,fontSize:13,cursor:"pointer"}}>Cancelar</button>
         </div>
       </div>
@@ -422,9 +441,9 @@ function NewOrderModal({user,T,onClose,onCreate}) {
 }
 
 function UsersPanel({users,currentUser,T,onNew,onEdit,onDelete}) {
-  const [search,setSearch]       = useState("");
-  const [confirmId,setConfirmId] = useState(null);
-  const visible = users.filter(u=>u.name.toLowerCase().includes(search.toLowerCase())||u.email.toLowerCase().includes(search.toLowerCase()));
+  const [search,setSearch]=useState("");
+  const [confirmId,setConfirmId]=useState(null);
+  const visible=users.filter(u=>u.name.toLowerCase().includes(search.toLowerCase())||u.email.toLowerCase().includes(search.toLowerCase()));
   return (
     <div>
       <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center"}}>
@@ -451,9 +470,7 @@ function UsersPanel({users,currentUser,T,onNew,onEdit,onDelete}) {
                     <button onClick={()=>{onDelete(u.id);setConfirmId(null);}} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:"0.5px solid #F4C0D1",background:"#FBEAF0",color:"#72243E",cursor:"pointer"}}>Sí</button>
                     <button onClick={()=>setConfirmId(null)} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer"}}>No</button>
                   </div>
-                ):(
-                  <button onClick={()=>setConfirmId(u.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:"0.5px solid #F4C0D1",background:"none",color:"#72243E",cursor:"pointer"}}>Eliminar</button>
-                ))}
+                ):<button onClick={()=>setConfirmId(u.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:"0.5px solid #F4C0D1",background:"none",color:"#72243E",cursor:"pointer"}}>Eliminar</button>)}
               </div>
             </div>
           </div>
@@ -464,17 +481,13 @@ function UsersPanel({users,currentUser,T,onNew,onEdit,onDelete}) {
 }
 
 function UserModal({userData,T,onSave,onClose}) {
-  const [form,setForm]       = useState(userData?{...userData,password:""}:{name:"",email:"",role:"empleado",password:""});
-  const [showPwd,setShowPwd] = useState(false);
-  const f     = (k,v) => setForm(p=>({...p,[k]:v}));
-  const valid = form.name&&form.email&&(userData?true:!!form.password);
-  const inp   = {padding:"8px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
-  const handleSave = () => {
-    if (!valid) return;
-    const data={...form};
-    if (userData&&!form.password) data.password=userData.password;
-    onSave(data);
-  };
+  const [form,setForm]=useState(userData?{...userData,password:""}:{name:"",email:"",role:"empleado",password:""});
+  const [showPwd,setShowPwd]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const f=(k,v)=>setForm(p=>({...p,[k]:v}));
+  const valid=form.name&&form.email&&(userData?true:!!form.password);
+  const inp={padding:"8px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
+  const handleSave=async()=>{ if(!valid) return; setSaving(true); const data={...form}; if(userData&&!form.password) data.password=userData.password; await onSave(data); setSaving(false); };
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.3)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
       <div style={{background:T.surface,borderRadius:16,padding:"1.75rem",width:"100%",maxWidth:440,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
@@ -491,7 +504,7 @@ function UserModal({userData,T,onSave,onClose}) {
         <div style={{marginBottom:20}}><div style={{fontSize:11,color:T.t3,marginBottom:4}}>Rol</div><select value={form.role} onChange={e=>f("role",e.target.value)} style={inp}>{Object.entries(ROLES).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</select></div>
         {form.role&&<div style={{background:ROLES[form.role].bg,borderRadius:8,padding:"10px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:8}}><Avatar name={form.name||"?"} role={form.role} size={32}/><div><div style={{fontSize:13,fontWeight:500,color:ROLES[form.role].text}}>{form.name||"Nombre del usuario"}</div><div style={{fontSize:11,color:ROLES[form.role].text,opacity:0.8}}>{ROLES[form.role].label}</div></div></div>}
         <div style={{display:"flex",gap:8}}>
-          <button disabled={!valid} onClick={handleSave} style={{...BP,opacity:valid?1:0.5,cursor:valid?"pointer":"not-allowed"}}>{userData?"Guardar cambios":"Crear usuario"}</button>
+          <button disabled={!valid||saving} onClick={handleSave} style={{...BP,opacity:valid&&!saving?1:0.5,cursor:valid&&!saving?"pointer":"not-allowed"}}>{saving?"Guardando…":userData?"Guardar cambios":"Crear usuario"}</button>
           <button onClick={onClose} style={{padding:"8px 14px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,fontSize:13,cursor:"pointer"}}>Cancelar</button>
         </div>
       </div>
