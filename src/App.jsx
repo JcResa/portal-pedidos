@@ -167,7 +167,7 @@ export default function App() {
 
   const visible = useMemo(()=>{
     let r=orders;
-    if (user&&!["admin","proveedor"].includes(user.role)) r=r.filter(o=>o.solicitante===user.name);
+    if (user&&!["admin","responsable,"proveedor"].includes(user.role)) r=r.filter(o=>o.solicitante===user.name);
     if (filterEstado!=="Todos") r=r.filter(o=>o.estado===filterEstado);
     if (filterCat!=="Todas")    r=r.filter(o=>o.categoria===filterCat);
     if (search) r=r.filter(o=>[o.producto,o.id,o.solicitante].some(v=>v.toLowerCase().includes(search.toLowerCase())));
