@@ -54,7 +54,14 @@ const nextStates = (role, cur) => ESTADOS.filter(s=>s!==cur&&canTransition(role,
 const Pill = ({estado}) => { const c=ECOLOR[estado]||{bg:"#F1EFE8",text:"#444441"}; return <span style={{background:c.bg,color:c.text,fontSize:11,fontWeight:500,padding:"2px 10px",borderRadius:20,whiteSpace:"nowrap"}}>{estado}</span>; };
 const Avatar = ({name,role,size=38}) => { const r=ROLES[role]||ROLES.empleado; const ini=name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase(); return <div style={{width:size,height:size,borderRadius:"50%",background:r.bg,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.35,fontWeight:500,color:r.text}}>{ini}</div>; };
 const Toast = ({msg,type}) => <div style={{position:"fixed",top:16,right:16,zIndex:999,background:type==="ok"?"#E1F5EE":"#FBEAF0",color:type==="ok"?"#085041":"#72243E",padding:"10px 18px",borderRadius:10,fontSize:13,fontWeight:500,border:`0.5px solid ${type==="ok"?"#9FE1CB":"#F4C0D1"}`}}>{msg}</div>;
-const DarkToggle = ({dark,onToggle}) => <button onClick={onToggle} style={{width:32,height:32,borderRadius:"50%",border:"0.5px solid rgba(128,128,128,0.25)",background:dark?"#3a3a36":"#eeece7",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{dark?"☀️":"🌙"}</button>;
+const DarkToggle = ({dark,onToggle}) => (
+  <button onClick={onToggle} style={{width:34,height:34,borderRadius:"50%",border:`0.5px solid ${dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.1)"}`,background:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,color:dark?"#e8e6de":"#534AB7",padding:0}}>
+    {dark
+      ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    }
+  </button>
+);
 const PulseBar = () => (<><style>{`@keyframes barPulse{0%,100%{opacity:1;width:6px;background:#534AB7;}50%{opacity:0.85;width:10px;background:#AFA9EC;}}`}</style><div style={{position:"absolute",left:0,top:0,bottom:0,width:6,borderRadius:"12px 0 0 12px",background:"#534AB7",animation:"barPulse 1s ease-in-out infinite"}}/></>);
 const Spinner = () => <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"3rem",color:"#9c9a92",fontSize:13}}>Cargando…</div>;
 const BP = {background:"#AFA9EC",color:"#26215C",border:"none",borderRadius:8,padding:"8px 16px",fontSize:13,fontWeight:500,cursor:"pointer"};
@@ -79,7 +86,10 @@ function LoginForm({T, onLogin}) {
   const [showPwd,setShowPwd]=useState(false);
   const [error,setError]=useState("");
   const [loading,setLoading]=useState(false);
-  const inp={padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
+  const inp={padding:"11px 14px",borderRadius:10,border:`0.5px solid ${T.border}`,fontSize:15,background:T.surf2,color:T.t1,width:"100%"};
+  const EyeIcon = ({off}) => off
+    ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+    : <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
   const handleLogin=async()=>{
     setLoading(true);setError("");
     const{data,error:e}=await supabase.auth.signInWithPassword({email,password});
@@ -90,14 +100,16 @@ function LoginForm({T, onLogin}) {
   return (
     <div>
       <div style={{marginBottom:14}}>
-        <div style={{fontSize:11,color:T.t3,marginBottom:4}}>Email</div>
+        <div style={{fontSize:12,color:T.t3,marginBottom:6,fontWeight:500,letterSpacing:"0.03em"}}>Email</div>
         <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setError("");}} placeholder="correo@empresa.com" style={inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
       </div>
       <div style={{marginBottom:6}}>
-        <div style={{fontSize:11,color:T.t3,marginBottom:4}}>Contraseña</div>
+        <div style={{fontSize:12,color:T.t3,marginBottom:6,fontWeight:500,letterSpacing:"0.03em"}}>Contraseña</div>
         <div style={{position:"relative"}}>
-          <input type={showPwd?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setError("");}} placeholder="••••••••" style={{...inp,paddingRight:40}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
-          <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:14,color:T.t3}}>{showPwd?"🙈":"👁️"}</button>
+          <input type={showPwd?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setError("");}} placeholder="••••••••" style={{...inp,paddingRight:44}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
+          <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.t3,display:"flex",alignItems:"center",padding:0}}>
+            <EyeIcon off={showPwd}/>
+          </button>
         </div>
       </div>
       {error&&<div style={{fontSize:12,color:"#72243E",background:"#FBEAF0",padding:"8px 12px",borderRadius:8,marginTop:8,marginBottom:4}}>{error}</div>}
