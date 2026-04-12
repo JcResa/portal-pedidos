@@ -1,5 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { supabase } from "./supabase";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const ROLES = {
   empleado:    { label:"Empleado",      color:"#AFA9EC", bg:"#EEEDFE", text:"#3C3489" },
@@ -186,7 +189,47 @@ export default function App() {
     return()=>supabase.removeChannel(sub);
   },[user,orders,loadOrders]);
 
-  const visible=useMemo(()=>{
+  const exportXLSX = (data, nombre) => {
+    const filas = data.map(h=>({
+      "Fecha":            fmtDateTime(h.created_at),
+      "Pedido":           h.pedido_id,
+      "Usuario":          h.usuario_nombre,
+      "Rol":              ROLES[h.usuario_role]?.label||h.usuario_role,
+      "Estado anterior":  h.estado_anterior||"—",
+      "Estado nuevo":     h.estado_nuevo,
+      "Notas":            h.notas||"",
+    }));
+    const ws = XLSX.utils.json_to_sheet(filas);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Historial");
+    XLSX.writeFile(wb, `${nombre}.xlsx`);
+  };
+
+  const exportPDF = (data, nombre) => {
+    const doc = new jsPDF({orientation:"landscape"});
+    doc.setFontSize(14);
+    doc.text("Historial de pedidos", 14, 16);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Exportado el ${fmtDateTime(new Date().toISOString())} · ${data.length} entradas`, 14, 22);
+    doc.autoTable({
+      startY: 28,
+      head: [["Fecha","Pedido","Usuario","Rol","Estado anterior","Estado nuevo","Notas"]],
+      body: data.map(h=>[
+        fmtDateTime(h.created_at),
+        h.pedido_id,
+        h.usuario_nombre,
+        ROLES[h.usuario_role]?.label||h.usuario_role,
+        h.estado_anterior||"—",
+        h.estado_nuevo,
+        h.notas||"",
+      ]),
+      styles:{fontSize:8,cellPadding:3},
+      headStyles:{fillColor:[83,74,183],textColor:255,fontStyle:"bold"},
+      alternateRowStyles:{fillColor:[238,237,254]},
+    });
+    doc.save(`${nombre}.pdf`);
+  };
     let r=orders;
     if(user&&!["admin","proveedor","responsable"].includes(user.role)) r=r.filter(o=>o.solicitante===user.name);
     if(filterEstado!=="Todos") r=r.filter(o=>o.estado===filterEstado);
@@ -383,9 +426,15 @@ export default function App() {
 
         {tab==="historial"&&(
           <div>
-            <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center"}}>
-              <input value={histSearch} onChange={e=>setHistSearch(e.target.value)} placeholder="Buscar por pedido, usuario, estado…" style={{flex:1,padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1}}/>
+            <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center",flexWrap:"wrap"}}>
+              <input value={histSearch} onChange={e=>setHistSearch(e.target.value)} placeholder="Buscar por pedido, usuario, estado…" style={{flex:1,minWidth:180,padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1}}/>
               <span style={{fontSize:12,color:T.t3,whiteSpace:"nowrap"}}>{visibleHist.length} entradas</span>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>exportXLSX(visibleHist,"historial-filtrado")} style={{...BP,fontSize:12,padding:"6px 12px",background:"#EAF3DE",color:"#27500A",border:"0.5px solid #97C459"}}>↓ XLSX (vista)</button>
+                <button onClick={()=>exportPDF(visibleHist,"historial-filtrado")} style={{...BP,fontSize:12,padding:"6px 12px",background:"#FCEBEB",color:"#791F1F",border:"0.5px solid #F09595"}}>↓ PDF (vista)</button>
+                <button onClick={()=>exportXLSX(historial,"historial-completo")} style={{...BP,fontSize:12,padding:"6px 12px"}}>↓ XLSX (todo)</button>
+                <button onClick={()=>exportPDF(historial,"historial-completo")} style={{...BP,fontSize:12,padding:"6px 12px"}}>↓ PDF (todo)</button>
+              </div>
             </div>
             {visibleHist.length===0?<div style={{textAlign:"center",padding:"3rem",color:T.t3,fontSize:14}}>No hay movimientos registrados</div>:(
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
