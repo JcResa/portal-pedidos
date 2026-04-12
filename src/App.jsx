@@ -382,25 +382,37 @@ export default function App() {
 
 function EstadoModal({order:o,next,T,onSelect,onClose}) {
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui,sans-serif"}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:T.surface,borderRadius:16,padding:"1.5rem",width:"100%",maxWidth:360,border:`0.5px solid ${T.border}`}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui,sans-serif",backdropFilter:"blur(2px)"}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:T.surface,borderRadius:20,padding:"2rem",width:"100%",maxWidth:420,border:`0.5px solid ${T.border}`,boxShadow:"0 24px 64px rgba(0,0,0,0.18)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
           <div>
-            <div style={{fontSize:15,fontWeight:500,color:T.t1}}>{o.producto}</div>
-            <div style={{fontSize:11,color:T.t3}}>{o.id} · Cambiar estado</div>
+            <div style={{fontSize:11,color:T.t3,marginBottom:4,textTransform:"uppercase",letterSpacing:"0.08em"}}>Cambiar estado</div>
+            <div style={{fontSize:18,fontWeight:500,color:T.t1,lineHeight:1.3}}>{o.producto}</div>
+            <div style={{fontSize:12,color:T.t3,marginTop:2}}>{o.id}</div>
           </div>
-          <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:T.t3}}>✕</button>
+          <button onClick={onClose} style={{background:T.surf2,border:"none",borderRadius:"50%",width:32,height:32,cursor:"pointer",fontSize:16,color:T.t2,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginLeft:12}}>✕</button>
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
           {next.map(s=>{
             const c=ECOLOR[s];
             return (
-              <button key={s} onClick={()=>{onSelect(s);onClose();}}
-                style={{width:"100%",padding:"12px 16px",borderRadius:10,border:`1px solid ${c.btn}`,background:c.bg,color:c.text,fontSize:14,fontWeight:500,cursor:"pointer",textAlign:"left"}}>
-                → {s}
+              <button key={s} onClick={()=>{onSelect(s);onClose();}} style={{
+                width:"100%",padding:"14px 18px",borderRadius:12,
+                border:`1.5px solid ${c.btn}`,background:c.bg,color:c.text,
+                fontSize:15,fontWeight:500,cursor:"pointer",
+                display:"flex",alignItems:"center",gap:10,
+                transition:"transform .1s, box-shadow .1s",
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.transform="scale(1.02)";}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="scale(1)";}}>
+                <span style={{width:10,height:10,borderRadius:"50%",background:c.btn,flexShrink:0,display:"inline-block"}}></span>
+                {s}
               </button>
             );
           })}
+        </div>
+        <div style={{marginTop:16,paddingTop:16,borderTop:`0.5px solid ${T.border}`,fontSize:12,color:T.t3,textAlign:"center"}}>
+          Pulsa fuera para cancelar
         </div>
       </div>
     </div>
