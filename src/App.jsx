@@ -380,42 +380,63 @@ export default function App() {
   );
 }
 
+function EstadoModal({order:o,next,T,onSelect,onClose}) {
+  return (
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui,sans-serif"}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:T.surface,borderRadius:16,padding:"1.5rem",width:"100%",maxWidth:360,border:`0.5px solid ${T.border}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+          <div>
+            <div style={{fontSize:15,fontWeight:500,color:T.t1}}>{o.producto}</div>
+            <div style={{fontSize:11,color:T.t3}}>{o.id} · Cambiar estado</div>
+          </div>
+          <button onClick={onClose} style={{background:"none",border:"none",fontSize:20,cursor:"pointer",color:T.t3}}>✕</button>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {next.map(s=>{
+            const c=ECOLOR[s];
+            return (
+              <button key={s} onClick={()=>{onSelect(s);onClose();}}
+                style={{width:"100%",padding:"12px 16px",borderRadius:10,border:`1px solid ${c.btn}`,background:c.bg,color:c.text,fontSize:14,fontWeight:500,cursor:"pointer",textAlign:"left"}}>
+                → {s}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEstado}) {
   const next=nextStates(user.role,o.estado);
-  const selRef=React.useRef(null);
+  const [showEstado,setShowEstado]=useState(false);
   let bg,border;
   if(highlight){bg=idx%2===0?"#EEEDFE":"#E4E2F8";border="1.5px solid #7F77DD";}
   else if(groupColors){bg=idx%2===0?groupColors.light:groupColors.dark;border=`1.5px solid ${groupColors.border}`;}
   else{bg=idx%2===0?T.surface:T.surf2;border=`0.5px solid ${T.border}`;}
 
   const handleRowClick=(e)=>{
-    if(e.target.tagName==="SELECT"||e.target.tagName==="OPTION"||e.target.tagName==="BUTTON") return;
-    if(next.length>0&&selRef.current){ selRef.current.focus(); selRef.current.size=next.length+1; setTimeout(()=>{ if(selRef.current) selRef.current.size=0; },3000); }
+    if(e.target.tagName==="BUTTON") return;
+    if(next.length>0) setShowEstado(true);
     else onSelect();
   };
 
   return (
-    <div onClick={handleRowClick} style={{background:bg,border,borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",position:"relative",overflow:"hidden",cursor:"pointer"}}>
-      {highlight&&<PulseBar/>}
-      <div style={{width:72,fontSize:11,fontWeight:500,color:T.t2,flexShrink:0}}>{o.id}</div>
-      <div style={{flex:1,minWidth:160}}>
-        <div style={{fontSize:14,fontWeight:500,color:highlight?"#3C3489":T.t1}}>{o.producto}</div>
-        <div style={{fontSize:11,color:T.t3}}>{o.categoria} · {o.cantidad} ud.{o.precio?` · €${(o.precio*o.cantidad).toLocaleString("es-ES")}`:""}</div>
-      </div>
-      {["admin","proveedor","responsable"].includes(user.role)&&<div style={{fontSize:12,color:T.t2,minWidth:100}}>{o.solicitante}</div>}
-      <div style={{minWidth:80}}><Pill estado={o.estado}/></div>
-      <div style={{fontSize:11,color:T.t3,minWidth:100}}>{o.estado==="Entregado"&&o.fechaEntrega?<span style={{color:"#27500A",fontWeight:500}}>Entregado {o.fechaEntrega}</span>:o.fechaEstimada?`Est. ${o.fechaEstimada}`:"—"}</div>
-      <div style={{display:"flex",gap:6,alignItems:"center"}}>
-        {next.length>0&&(
-          <select ref={selRef} defaultValue="" onChange={e=>{if(e.target.value){e.target.size=0;onChangeEstado(e.target.value);e.target.value="";}}} onBlur={e=>e.target.size=0} onClick={e=>e.stopPropagation()}
-            style={{fontSize:13,padding:"6px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer",maxWidth:200}}>
-            <option value="" disabled>→ Cambiar estado</option>
-            {next.map(s=>{const c=ECOLOR[s];return <option key={s} value={s} style={{background:c.bg,color:c.text}}>→ {s}</option>;})}
-          </select>
-        )}
+    <>
+      {showEstado&&<EstadoModal order={o} next={next} T={T} onSelect={onChangeEstado} onClose={()=>setShowEstado(false)}/>}
+      <div onClick={handleRowClick} style={{background:bg,border,borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",position:"relative",overflow:"hidden",cursor:"pointer"}}>
+        {highlight&&<PulseBar/>}
+        <div style={{width:72,fontSize:11,fontWeight:500,color:T.t2,flexShrink:0}}>{o.id}</div>
+        <div style={{flex:1,minWidth:160}}>
+          <div style={{fontSize:14,fontWeight:500,color:highlight?"#3C3489":T.t1}}>{o.producto}</div>
+          <div style={{fontSize:11,color:T.t3}}>{o.categoria} · {o.cantidad} ud.{o.precio?` · €${(o.precio*o.cantidad).toLocaleString("es-ES")}`:""}</div>
+        </div>
+        {["admin","proveedor","responsable"].includes(user.role)&&<div style={{fontSize:12,color:T.t2,minWidth:100}}>{o.solicitante}</div>}
+        <div style={{minWidth:80}}><Pill estado={o.estado}/></div>
+        <div style={{fontSize:11,color:T.t3,minWidth:100}}>{o.estado==="Entregado"&&o.fechaEntrega?<span style={{color:"#27500A",fontWeight:500}}>Entregado {o.fechaEntrega}</span>:o.fechaEstimada?`Est. ${o.fechaEstimada}`:"—"}</div>
         <button onClick={e=>{e.stopPropagation();onSelect();}} style={{fontSize:13,padding:"6px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer"}}>Ver</button>
       </div>
-    </div>
+    </>
   );
 }
 
