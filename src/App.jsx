@@ -72,7 +72,7 @@ function SectionHead({label,count,bg,border,dot,text,cBg,cText,collapsed,onToggl
     </div></>);
 }
 
-function LoginForm({T, onLogin}) {
+function LoginForm({T, dark, onLogin}) {
   const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [showPwd,setShowPwd]=useState(false); const [error,setError]=useState(""); const [loading,setLoading]=useState(false);
   const inp={padding:"13px 16px",borderRadius:10,border:`0.5px solid ${T.border}`,fontSize:15,background:T.surface,color:T.t1,width:"100%",outline:"none",transition:"border .15s",colorScheme:dark?"dark":"light"};
   const handleLogin=async()=>{
@@ -310,7 +310,7 @@ export default function App() {
               <div style={{fontSize:24,fontWeight:500,color:T.t1,marginBottom:6}}>Bienvenido</div>
               <div style={{fontSize:15,color:T.t3}}>Introduce tus credenciales para acceder</div>
             </div>
-            <LoginForm T={T} onLogin={u=>{setUser(u);setTab("pedidos");setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
+            <LoginForm T={T} dark={dark} onLogin={u=>{setUser(u);setTab("pedidos");setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
           </div>
 
           <div style={{textAlign:"center",marginTop:24,fontSize:12,color:T.t3}}>
