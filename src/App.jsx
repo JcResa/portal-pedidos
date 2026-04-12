@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { supabase } from "./supabase";
 
 const ROLES = {
@@ -382,7 +382,7 @@ export default function App() {
 
 function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEstado}) {
   const next=nextStates(user.role,o.estado);
-  const selRef=useState(null);
+  const selRef=React.useRef(null);
   let bg,border;
   if(highlight){bg=idx%2===0?"#EEEDFE":"#E4E2F8";border="1.5px solid #7F77DD";}
   else if(groupColors){bg=idx%2===0?groupColors.light:groupColors.dark;border=`1.5px solid ${groupColors.border}`;}
@@ -390,7 +390,7 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
 
   const handleRowClick=(e)=>{
     if(e.target.tagName==="SELECT"||e.target.tagName==="OPTION"||e.target.tagName==="BUTTON") return;
-    if(next.length>0 && selRef[0]) selRef[0].focus();
+    if(next.length>0&&selRef.current){ selRef.current.focus(); selRef.current.size=next.length+1; setTimeout(()=>{ if(selRef.current) selRef.current.size=0; },3000); }
     else onSelect();
   };
 
@@ -407,7 +407,7 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
       <div style={{fontSize:11,color:T.t3,minWidth:100}}>{o.estado==="Entregado"&&o.fechaEntrega?<span style={{color:"#27500A",fontWeight:500}}>Entregado {o.fechaEntrega}</span>:o.fechaEstimada?`Est. ${o.fechaEstimada}`:"—"}</div>
       <div style={{display:"flex",gap:6,alignItems:"center"}}>
         {next.length>0&&(
-          <select ref={el=>selRef[0]=el} defaultValue="" onChange={e=>{if(e.target.value){onChangeEstado(e.target.value);e.target.value="";}}} onClick={e=>e.stopPropagation()}
+          <select ref={selRef} defaultValue="" onChange={e=>{if(e.target.value){e.target.size=0;onChangeEstado(e.target.value);e.target.value="";}}} onBlur={e=>e.target.size=0} onClick={e=>e.stopPropagation()}
             style={{fontSize:13,padding:"6px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer",maxWidth:200}}>
             <option value="" disabled>→ Cambiar estado</option>
             {next.map(s=>{const c=ECOLOR[s];return <option key={s} value={s} style={{background:c.bg,color:c.text}}>→ {s}</option>;})}
