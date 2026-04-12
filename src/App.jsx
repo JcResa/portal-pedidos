@@ -429,12 +429,12 @@ export default function App() {
             <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center",flexWrap:"wrap"}}>
               <input value={histSearch} onChange={e=>setHistSearch(e.target.value)} placeholder="Buscar por pedido, usuario, estado…" style={{flex:1,minWidth:180,padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1}}/>
               <span style={{fontSize:12,color:T.t3,whiteSpace:"nowrap"}}>{visibleHist.length} entradas</span>
-              <div style={{display:"flex",gap:6}}>
-                <button onClick={()=>exportXLSX(visibleHist,"historial-filtrado")} style={{...BP,fontSize:12,padding:"6px 12px",background:"#EAF3DE",color:"#27500A",border:"0.5px solid #97C459"}}>↓ XLSX (vista)</button>
-                <button onClick={()=>exportPDF(visibleHist,"historial-filtrado")} style={{...BP,fontSize:12,padding:"6px 12px",background:"#FCEBEB",color:"#791F1F",border:"0.5px solid #F09595"}}>↓ PDF (vista)</button>
-                <button onClick={()=>exportXLSX(historial,"historial-completo")} style={{...BP,fontSize:12,padding:"6px 12px"}}>↓ XLSX (todo)</button>
-                <button onClick={()=>exportPDF(historial,"historial-completo")} style={{...BP,fontSize:12,padding:"6px 12px"}}>↓ PDF (todo)</button>
-              </div>
+            </div>
+            <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
+              <button onClick={()=>exportXLSX(visibleHist,"historial-filtrado")} style={{...BP,fontSize:12,padding:"6px 12px",background:"#EAF3DE",color:"#27500A",border:"0.5px solid #97C459"}}>↓ XLSX (vista)</button>
+              <button onClick={()=>exportPDF(visibleHist,"historial-filtrado")} style={{...BP,fontSize:12,padding:"6px 12px",background:"#FCEBEB",color:"#791F1F",border:"0.5px solid #F09595"}}>↓ PDF (vista)</button>
+              <button onClick={()=>exportXLSX(historial,"historial-completo")} style={{...BP,fontSize:12,padding:"6px 12px"}}>↓ XLSX (todo)</button>
+              <button onClick={()=>exportPDF(historial,"historial-completo")} style={{...BP,fontSize:12,padding:"6px 12px"}}>↓ PDF (todo)</button>
             </div>
             {visibleHist.length===0?<div style={{textAlign:"center",padding:"3rem",color:T.t3,fontSize:14}}>No hay movimientos registrados</div>:(
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
