@@ -151,12 +151,16 @@ export default function App() {
 
   useEffect(()=>{
     if(!user) return;
-    const sub=supabase.channel("pedidos-changes")
+    const sub=supabase.channel("realtime-changes")
       .on("postgres_changes",{event:"*",schema:"public",table:"pedidos"},()=>loadOrders())
-      .on("postgres_changes",{event:"*",schema:"public",table:"historial"},()=>loadHistorial(user))
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"historial"},payload=>{
+        const h=payload.new;
+        const esVisible=["admin","proveedor"].includes(user.role)||orders.some(o=>o.id===h.pedido_id&&o.solicitante===user.name);
+        if(esVisible) setHistorial(p=>[h,...p]);
+      })
       .subscribe();
     return()=>supabase.removeChannel(sub);
-  },[user,loadOrders,loadHistorial]);
+  },[user,orders,loadOrders]);
 
   const visible=useMemo(()=>{
     let r=orders;
