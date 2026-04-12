@@ -25,6 +25,7 @@ const ECOLOR = {
 };
 
 const fmtDate = () => { const d=new Date(); return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`; };
+const fmtDateTime = (ts) => { const d=new Date(ts); return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; };
 const nextPedidoId = (orders) => "PED-"+String(Math.max(0,...orders.map(o=>parseInt(o.id.split("-")[1]||0)))+1).padStart(3,"0");
 
 const canTransition = (role, from, to) => {
@@ -69,182 +70,178 @@ function SectionHead({label,count,bg,border,dot,text,cBg,cText,collapsed,onToggl
 }
 
 function LoginForm({T, onLogin}) {
-  const [email,setEmail]       = useState("");
-  const [password,setPassword] = useState("");
-  const [showPwd,setShowPwd]   = useState(false);
-  const [error,setError]       = useState("");
-  const [loading,setLoading]   = useState(false);
-  const inp = {padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
-
-  const handleLogin = async () => {
-    setLoading(true); setError("");
-    const { data, error: authErr } = await supabase.auth.signInWithPassword({ email, password });
-    if (authErr) { setError("Email o contraseña incorrectos"); setLoading(false); return; }
-    const { data: userData } = await supabase.from("usuarios").select("*").eq("id", data.user.id).single();
-    if (userData) onLogin(userData);
-    else { setError("Usuario no encontrado en la base de datos"); setLoading(false); }
+  const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [showPwd,setShowPwd]=useState(false); const [error,setError]=useState(""); const [loading,setLoading]=useState(false);
+  const inp={padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
+  const handleLogin=async()=>{
+    setLoading(true);setError("");
+    const{data,error:e}=await supabase.auth.signInWithPassword({email,password});
+    if(e){setError("Email o contraseña incorrectos");setLoading(false);return;}
+    const{data:u}=await supabase.from("usuarios").select("*").eq("id",data.user.id).single();
+    if(u) onLogin(u); else{setError("Usuario no encontrado");setLoading(false);}
   };
-
   return (
     <div>
-      <div style={{marginBottom:14}}>
-        <div style={{fontSize:11,color:T.t3,marginBottom:4}}>Email</div>
-        <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setError("");}} placeholder="correo@empresa.com" style={inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
-      </div>
-      <div style={{marginBottom:6}}>
-        <div style={{fontSize:11,color:T.t3,marginBottom:4}}>Contraseña</div>
+      <div style={{marginBottom:14}}><div style={{fontSize:11,color:T.t3,marginBottom:4}}>Email</div><input type="email" value={email} onChange={e=>{setEmail(e.target.value);setError("");}} placeholder="correo@empresa.com" style={inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/></div>
+      <div style={{marginBottom:6}}><div style={{fontSize:11,color:T.t3,marginBottom:4}}>Contraseña</div>
         <div style={{position:"relative"}}>
           <input type={showPwd?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setError("");}} placeholder="••••••••" style={{...inp,paddingRight:40}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
           <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:14,color:T.t3}}>{showPwd?"🙈":"👁️"}</button>
         </div>
       </div>
       {error&&<div style={{fontSize:12,color:"#72243E",background:"#FBEAF0",padding:"8px 12px",borderRadius:8,marginTop:8,marginBottom:4}}>{error}</div>}
-      <div style={{marginBottom:16}}></div>
+      <div style={{marginBottom:16}}/>
       <button onClick={handleLogin} disabled={loading} style={{...BP,width:"100%",padding:"11px",borderRadius:10,fontSize:14,opacity:loading?0.7:1}}>{loading?"Entrando…":"Entrar"}</button>
     </div>
   );
 }
 
 export default function App() {
-  const [dark,setDark]          = useState(()=>JSON.parse(localStorage.getItem("dark")||"false"));
-  const [user,setUser]          = useState(null);
-  const [orders,setOrders]      = useState([]);
-  const [loading,setLoading]    = useState(false);
-  const [tab,setTab]            = useState("pedidos");
-  const [users,setUsers]        = useState([]);
-  const [selected,setSelected]  = useState(null);
-  const [showForm,setShowForm]  = useState(false);
-  const [filterEstado,setFilterEstado] = useState("Todos");
-  const [filterCat,setFilterCat]       = useState("Todas");
-  const [search,setSearch]      = useState("");
-  const [toast,setToast]        = useState(null);
-  const [userModal,setUserModal]= useState(null);
-  const [collapsed,setCollapsed]= useState({nuevos:true,curso:true,finalizados:true});
+  const [dark,setDark]=useState(()=>JSON.parse(localStorage.getItem("dark")||"false"));
+  const [user,setUser]=useState(null);
+  const [orders,setOrders]=useState([]);
+  const [historial,setHistorial]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [tab,setTab]=useState("pedidos");
+  const [users,setUsers]=useState([]);
+  const [selected,setSelected]=useState(null);
+  const [showForm,setShowForm]=useState(false);
+  const [filterEstado,setFilterEstado]=useState("Todos");
+  const [filterCat,setFilterCat]=useState("Todas");
+  const [search,setSearch]=useState("");
+  const [histSearch,setHistSearch]=useState("");
+  const [toast,setToast]=useState(null);
+  const [userModal,setUserModal]=useState(null);
+  const [collapsed,setCollapsed]=useState({nuevos:true,curso:true,finalizados:true});
 
-  const T = {
-    bg:      dark?"#1a1a18":"#f7f6f3",
-    surface: dark?"#252522":"#ffffff",
-    surf2:   dark?"#2e2e2a":"#edecea",
-    t1:      dark?"#e8e6de":"#1a1a18",
-    t2:      dark?"#9c9a92":"#6b6a64",
-    t3:      dark?"#6b6a64":"#9c9a92",
-    border:  dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.08)",
+  const T={
+    bg:dark?"#1a1a18":"#f7f6f3", surface:dark?"#252522":"#ffffff", surf2:dark?"#2e2e2a":"#edecea",
+    t1:dark?"#e8e6de":"#1a1a18", t2:dark?"#9c9a92":"#6b6a64", t3:dark?"#6b6a64":"#9c9a92",
+    border:dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.08)",
   };
 
-  useEffect(()=>{ localStorage.setItem("dark",JSON.stringify(dark)); },[dark]);
+  useEffect(()=>{localStorage.setItem("dark",JSON.stringify(dark));},[dark]);
+  const showToast=(msg,type="ok")=>{setToast({msg,type});setTimeout(()=>setToast(null),3000);};
+  const toggle=(key)=>setCollapsed(p=>({...p,[key]:!p[key]}));
 
-  const showToast = (msg,type="ok") => { setToast({msg,type}); setTimeout(()=>setToast(null),3000); };
-  const toggle    = (key) => setCollapsed(p=>({...p,[key]:!p[key]}));
-
-  const loadOrders = useCallback(async () => {
+  const loadOrders=useCallback(async()=>{
     setLoading(true);
-    const { data } = await supabase.from("pedidos").select("*").order("created_at",{ascending:false});
-    if (data) setOrders(data.map(o=>({
-      id: o.id, producto: o.producto, categoria: o.categoria, cantidad: o.cantidad,
-      precio: o.precio, solicitante: o.solicitante, estado: o.estado,
-      fechaSolicitud: o.fecha_solicitud, fechaEstimada: o.fecha_estimada||"",
-      fechaEntrega: o.fecha_entrega||"", tracking: o.tracking||"",
-      notas: o.notas||"", notasIncidencia: o.notas_incidencia||"",
-    })));
+    const{data}=await supabase.from("pedidos").select("*").order("created_at",{ascending:false});
+    if(data) setOrders(data.map(o=>({id:o.id,producto:o.producto,categoria:o.categoria,cantidad:o.cantidad,precio:o.precio,solicitante:o.solicitante,estado:o.estado,fechaSolicitud:o.fecha_solicitud,fechaEstimada:o.fecha_estimada||"",fechaEntrega:o.fecha_entrega||"",tracking:o.tracking||"",notas:o.notas||"",notasIncidencia:o.notas_incidencia||""})));
     setLoading(false);
   },[]);
 
-  const loadUsers = useCallback(async () => {
-    const { data } = await supabase.from("usuarios").select("*");
-    if (data) setUsers(data);
+  const loadUsers=useCallback(async()=>{
+    const{data}=await supabase.from("usuarios").select("*");
+    if(data) setUsers(data);
   },[]);
 
-  useEffect(()=>{ if(user){ loadOrders(); loadUsers(); } },[user,loadOrders,loadUsers]);
+  const loadHistorial=useCallback(async(currentUser)=>{
+    let q=supabase.from("historial").select("*").order("created_at",{ascending:false});
+    if(!["admin","proveedor"].includes(currentUser.role)){
+      const myOrders=await supabase.from("pedidos").select("id").eq("solicitante",currentUser.name);
+      const ids=(myOrders.data||[]).map(o=>o.id);
+      if(ids.length===0){setHistorial([]);return;}
+      q=q.in("pedido_id",ids);
+    }
+    const{data}=await q;
+    if(data) setHistorial(data);
+  },[]);
 
-  // Suscripción en tiempo real
+  useEffect(()=>{if(user){loadOrders();loadUsers();loadHistorial(user);}},[user,loadOrders,loadUsers,loadHistorial]);
+
   useEffect(()=>{
-    if (!user) return;
-    const sub = supabase.channel("pedidos-changes")
+    if(!user) return;
+    const sub=supabase.channel("pedidos-changes")
       .on("postgres_changes",{event:"*",schema:"public",table:"pedidos"},()=>loadOrders())
+      .on("postgres_changes",{event:"*",schema:"public",table:"historial"},()=>loadHistorial(user))
       .subscribe();
-    return ()=>supabase.removeChannel(sub);
-  },[user,loadOrders]);
+    return()=>supabase.removeChannel(sub);
+  },[user,loadOrders,loadHistorial]);
 
-  const visible = useMemo(()=>{
+  const visible=useMemo(()=>{
     let r=orders;
-    if (user&&!["admin","responsable,"proveedor"].includes(user.role)) r=r.filter(o=>o.solicitante===user.name);
-    if (filterEstado!=="Todos") r=r.filter(o=>o.estado===filterEstado);
-    if (filterCat!=="Todas")    r=r.filter(o=>o.categoria===filterCat);
-    if (search) r=r.filter(o=>[o.producto,o.id,o.solicitante].some(v=>v.toLowerCase().includes(search.toLowerCase())));
+    if(user&&!["admin","proveedor","responsable"].includes(user.role)) r=r.filter(o=>o.solicitante===user.name);
+    if(filterEstado!=="Todos") r=r.filter(o=>o.estado===filterEstado);
+    if(filterCat!=="Todas") r=r.filter(o=>o.categoria===filterCat);
+    if(search) r=r.filter(o=>[o.producto,o.id,o.solicitante].some(v=>v.toLowerCase().includes(search.toLowerCase())));
     return r;
   },[orders,user,filterEstado,filterCat,search]);
 
-  const updateOrder = async (id, changes) => {
-    const dbChanges = {};
-    if (changes.estado)          dbChanges.estado           = changes.estado;
-    if (changes.producto)        dbChanges.producto         = changes.producto;
-    if (changes.categoria)       dbChanges.categoria        = changes.categoria;
-    if (changes.cantidad)        dbChanges.cantidad         = changes.cantidad;
-    if (changes.precio!==undefined) dbChanges.precio        = changes.precio;
-    if (changes.solicitante)     dbChanges.solicitante      = changes.solicitante;
-    if (changes.fechaEstimada!==undefined) dbChanges.fecha_estimada = changes.fechaEstimada||null;
-    if (changes.fechaEntrega!==undefined)  dbChanges.fecha_entrega  = changes.fechaEntrega||"";
-    if (changes.tracking!==undefined)      dbChanges.tracking       = changes.tracking||"";
-    if (changes.notas!==undefined)         dbChanges.notas          = changes.notas||"";
-    if (changes.notasIncidencia!==undefined) dbChanges.notas_incidencia = changes.notasIncidencia||"";
+  const visibleHist=useMemo(()=>{
+    if(!histSearch) return historial;
+    return historial.filter(h=>[h.pedido_id,h.usuario_nombre,h.estado_anterior,h.estado_nuevo,h.notas].some(v=>v&&v.toLowerCase().includes(histSearch.toLowerCase())));
+  },[historial,histSearch]);
+
+  const addHistorial=async(pedidoId,estadoAnterior,estadoNuevo,notas="")=>{
+    await supabase.from("historial").insert({pedido_id:pedidoId,usuario_nombre:user.name,usuario_role:user.role,estado_anterior:estadoAnterior,estado_nuevo:estadoNuevo,notas});
+  };
+
+  const updateOrder=async(id,changes)=>{
+    const dbChanges={};
+    if(changes.estado!==undefined)           dbChanges.estado=changes.estado;
+    if(changes.producto)                     dbChanges.producto=changes.producto;
+    if(changes.categoria)                    dbChanges.categoria=changes.categoria;
+    if(changes.cantidad)                     dbChanges.cantidad=changes.cantidad;
+    if(changes.precio!==undefined)           dbChanges.precio=changes.precio;
+    if(changes.solicitante)                  dbChanges.solicitante=changes.solicitante;
+    if(changes.fechaEstimada!==undefined)    dbChanges.fecha_estimada=changes.fechaEstimada||null;
+    if(changes.fechaEntrega!==undefined)     dbChanges.fecha_entrega=changes.fechaEntrega||"";
+    if(changes.tracking!==undefined)         dbChanges.tracking=changes.tracking||"";
+    if(changes.notas!==undefined)            dbChanges.notas=changes.notas||"";
+    if(changes.notasIncidencia!==undefined)  dbChanges.notas_incidencia=changes.notasIncidencia||"";
     await supabase.from("pedidos").update(dbChanges).eq("id",id);
     setOrders(p=>p.map(o=>o.id===id?{...o,...changes}:o));
     setSelected(p=>p?.id===id?{...p,...changes}:p);
   };
 
-  const deleteOrder = async (id) => {
+  const deleteOrder=async(id)=>{
     await supabase.from("pedidos").delete().eq("id",id);
     setOrders(p=>p.filter(o=>o.id!==id));
-    setSelected(null); showToast("Pedido eliminado");
+    setSelected(null);showToast("Pedido eliminado");
   };
 
-  const changeEstado = async (id, estado) => {
-    const changes = {estado};
-    if (estado==="Entregado") changes.fechaEntrega=fmtDate();
-    await updateOrder(id, changes);
+  const changeEstado=async(id,estado)=>{
+    const order=orders.find(o=>o.id===id);
+    const ch={estado};
+    if(estado==="Entregado") ch.fechaEntrega=fmtDate();
+    await updateOrder(id,ch);
+    await addHistorial(id,order?.estado||"",estado);
     showToast(`Estado → ${estado}`);
   };
 
-  const createOrder = async (data) => {
-    const newId = nextPedidoId(orders);
-    const row = {
-      id: newId, producto: data.producto, categoria: data.categoria,
-      cantidad: data.cantidad, precio: data.precio||0,
-      solicitante: user.name, estado: "Nuevo pedido",
-      fecha_solicitud: new Date().toISOString().slice(0,10),
-      fecha_estimada: data.fechaEstimada||null,
-      tracking: "", fecha_entrega: "", notas: data.notas||"", notas_incidencia: "",
-    };
+  const createOrder=async(data)=>{
+    const newId=nextPedidoId(orders);
+    const row={id:newId,producto:data.producto,categoria:data.categoria,cantidad:data.cantidad,precio:data.precio||0,solicitante:user.name,estado:"Nuevo pedido",fecha_solicitud:new Date().toISOString().slice(0,10),fecha_estimada:data.fechaEstimada||null,tracking:"",fecha_entrega:"",notas:data.notas||"",notas_incidencia:""};
     await supabase.from("pedidos").insert(row);
+    await addHistorial(newId,"","Nuevo pedido","Pedido creado");
     await loadOrders();
     showToast("Pedido creado");
   };
 
-  const saveUser = async (data) => {
-    if (data.id) {
+  const saveUser=async(data)=>{
+    if(data.id){
       await supabase.from("usuarios").update({name:data.name,email:data.email,role:data.role}).eq("id",data.id);
-      if (data.password) await supabase.auth.admin.updateUserById(data.id,{password:data.password});
       setUsers(p=>p.map(u=>u.id===data.id?{...u,...data}:u));
-      if (user.id===data.id) setUser(d=>({...d,...data}));
+      if(user.id===data.id) setUser(d=>({...d,...data}));
       showToast("Usuario actualizado");
     } else {
-      const { data: authData, error } = await supabase.auth.signUp({email:data.email,password:data.password});
-      if (error) { showToast("Error al crear usuario: "+error.message,"err"); return; }
+      const{data:authData,error}=await supabase.auth.signUp({email:data.email,password:data.password});
+      if(error){showToast("Error: "+error.message,"err");return;}
       await supabase.from("usuarios").insert({id:authData.user.id,name:data.name,email:data.email,role:data.role});
       await loadUsers();
-      showToast("Usuario creado — debe confirmar su email");
+      showToast("Usuario creado");
     }
     setUserModal(null);
   };
 
-  const deleteUser = async (id) => {
-    if (id===user.id) { showToast("No puedes eliminarte","err"); return; }
+  const deleteUser=async(id)=>{
+    if(id===user.id){showToast("No puedes eliminarte","err");return;}
     await supabase.from("usuarios").delete().eq("id",id);
     setUsers(p=>p.filter(u=>u.id!==id));
     showToast("Usuario eliminado");
   };
 
-  if (!user) return (
+  if(!user) return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"system-ui,sans-serif"}}>
       <div style={{background:T.surface,borderRadius:16,border:`0.5px solid ${T.border}`,padding:"2.5rem 2rem",width:"100%",maxWidth:400}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
@@ -252,19 +249,22 @@ export default function App() {
           <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)}/>
         </div>
         <div style={{fontSize:13,color:T.t3,marginBottom:24}}>Introduce tus credenciales</div>
-        <LoginForm T={T} onLogin={u=>{setUser(u);setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
+        <LoginForm T={T} onLogin={u=>{setUser(u);setTab("pedidos");setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
       </div>
     </div>
   );
 
-  const nuevos      = user.role==="proveedor" ? visible.filter(o=>o.estado==="Nuevo pedido") : [];
-  const enCurso     = visible.filter(o=>!["Entregado","Cancelado",...ESTADOS_PROVEEDOR_POST].includes(o.estado)&&(user.role!=="proveedor"||o.estado!=="Nuevo pedido"));
-  const finalizados = visible.filter(o=>["Entregado","Cancelado",...ESTADOS_PROVEEDOR_POST].includes(o.estado));
-  const rp = (o,i,highlight=false,gc=null) => ({order:o,user,idx:i,highlight,T,groupColors:gc,onSelect:()=>setSelected(o),onChangeEstado:est=>changeEstado(o.id,est)});
+  const nuevos=user.role==="proveedor"?visible.filter(o=>o.estado==="Nuevo pedido"):[];
+  const enCurso=visible.filter(o=>!["Entregado","Cancelado",...ESTADOS_PROVEEDOR_POST].includes(o.estado)&&(user.role!=="proveedor"||o.estado!=="Nuevo pedido"));
+  const finalizados=visible.filter(o=>["Entregado","Cancelado",...ESTADOS_PROVEEDOR_POST].includes(o.estado));
+  const rp=(o,i,highlight=false,gc=null)=>({order:o,user,idx:i,highlight,T,groupColors:gc,onSelect:()=>setSelected(o),onChangeEstado:est=>changeEstado(o.id,est)});
+
+  const tabs=["pedidos","historial","usuarios"].filter(t=>t!=="usuarios"||user.role==="admin");
 
   return (
     <div style={{minHeight:"100vh",background:T.bg,fontFamily:"system-ui,sans-serif"}}>
       {toast&&<Toast {...toast}/>}
+
       <div style={{background:T.surface,borderBottom:`0.5px solid ${T.border}`,padding:"0 1.5rem",display:"flex",alignItems:"center",justifyContent:"space-between",height:52}}>
         <div style={{display:"flex",alignItems:"center",gap:16}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -272,8 +272,7 @@ export default function App() {
             <span style={{fontSize:14,fontWeight:500,color:T.t1}}>Portal de pedidos</span>
           </div>
           <div style={{display:"flex",gap:2}}>
-            {["pedidos","usuarios"].map(t=>{ if(t==="usuarios"&&user.role!=="admin") return null;
-              return <button key={t} onClick={()=>setTab(t)} style={{fontSize:13,padding:"4px 12px",borderRadius:6,border:"none",cursor:"pointer",background:tab===t?"#EEEDFE":"transparent",color:tab===t?"#3C3489":T.t2,fontWeight:tab===t?500:400}}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>;})}
+            {tabs.map(t=><button key={t} onClick={()=>setTab(t)} style={{fontSize:13,padding:"4px 12px",borderRadius:6,border:"none",cursor:"pointer",background:tab===t?"#EEEDFE":"transparent",color:tab===t?"#3C3489":T.t2,fontWeight:tab===t?500:400}}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>)}
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -285,6 +284,8 @@ export default function App() {
       </div>
 
       <div style={{maxWidth:1100,margin:"0 auto",padding:"1.5rem 1rem"}}>
+
+        {/* PESTAÑA PEDIDOS */}
         {tab==="pedidos"&&<>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16,alignItems:"center"}}>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar pedido, producto, solicitante…" style={{flex:1,minWidth:200,padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1}}/>
@@ -300,15 +301,15 @@ export default function App() {
           {["admin","proveedor"].includes(user.role)&&(
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8,marginBottom:16}}>
               {[
-                {label:"Pedidos nuevos",  val:orders.filter(o=>o.estado==="Nuevo pedido").length,          bg:"#EEEDFE",text:"#3C3489"},
-                {label:"En preparación",  val:orders.filter(o=>o.estado==="En preparación").length,        bg:"#FAEEDA",text:"#633806"},
-                {label:"En tránsito",     val:orders.filter(o=>o.estado==="Enviado / en tránsito").length, bg:"#E6F1FB",text:"#0C447C"},
-                {label:"Entregados",      val:orders.filter(o=>o.estado==="Entregado").length,             bg:"#EAF3DE",text:"#27500A"},
+                {label:"Pedidos nuevos", val:orders.filter(o=>o.estado==="Nuevo pedido").length,          bg:"#EEEDFE",text:"#3C3489"},
+                {label:"En preparación", val:orders.filter(o=>o.estado==="En preparación").length,        bg:"#FAEEDA",text:"#633806"},
+                {label:"En tránsito",    val:orders.filter(o=>o.estado==="Enviado / en tránsito").length, bg:"#E6F1FB",text:"#0C447C"},
+                {label:"Entregados",     val:orders.filter(o=>o.estado==="Entregado").length,             bg:"#EAF3DE",text:"#27500A"},
               ].map(s=><div key={s.label} style={{background:s.bg,borderRadius:10,padding:"12px 14px"}}><div style={{fontSize:11,color:s.text,marginBottom:4}}>{s.label}</div><div style={{fontSize:20,fontWeight:500,color:s.text}}>{s.val}</div></div>)}
             </div>
           )}
 
-          {loading ? <Spinner/> : <>
+          {loading?<Spinner/>:<>
             {visible.length===0&&<div style={{textAlign:"center",padding:"3rem",color:T.t3,fontSize:14}}>No hay pedidos que mostrar</div>}
             {nuevos.length>0&&(<div style={{marginBottom:24}}>
               <SectionHead label="Nuevos pedidos pendientes" count={nuevos.length} bg="#EEEDFE" border="#AFA9EC" dot="#7F77DD" text="#3C3489" cBg="#3C3489" cText="#EEEDFE" collapsed={collapsed.nuevos} onToggle={()=>toggle("nuevos")} pulsing={true}/>
@@ -325,6 +326,46 @@ export default function App() {
           </>}
         </>}
 
+        {/* PESTAÑA HISTORIAL */}
+        {tab==="historial"&&(
+          <div>
+            <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center"}}>
+              <input value={histSearch} onChange={e=>setHistSearch(e.target.value)} placeholder="Buscar por pedido, usuario, estado…"
+                style={{flex:1,padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1}}/>
+              <span style={{fontSize:12,color:T.t3,whiteSpace:"nowrap"}}>{visibleHist.length} entradas</span>
+            </div>
+            {visibleHist.length===0?<div style={{textAlign:"center",padding:"3rem",color:T.t3,fontSize:14}}>No hay movimientos registrados</div>:(
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                {visibleHist.map((h,i)=>{
+                  const r=ROLES[h.usuario_role]||ROLES.empleado;
+                  const cOld=ECOLOR[h.estado_anterior]||{bg:"#F1EFE8",text:"#444441"};
+                  const cNew=ECOLOR[h.estado_nuevo]||{bg:"#F1EFE8",text:"#444441"};
+                  return (
+                    <div key={h.id} style={{background:i%2===0?T.surface:T.surf2,border:`0.5px solid ${T.border}`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+                      <div style={{fontSize:11,color:T.t3,minWidth:120,flexShrink:0}}>{fmtDateTime(h.created_at)}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:6,minWidth:130,flexShrink:0}}>
+                        <Avatar name={h.usuario_nombre} role={h.usuario_role} size={24}/>
+                        <div>
+                          <div style={{fontSize:12,fontWeight:500,color:T.t1}}>{h.usuario_nombre}</div>
+                          <span style={{background:r.bg,color:r.text,fontSize:9,fontWeight:500,padding:"1px 6px",borderRadius:20}}>{r.label}</span>
+                        </div>
+                      </div>
+                      <div style={{fontSize:11,fontWeight:500,color:T.t2,minWidth:72,flexShrink:0}}>{h.pedido_id}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:6,flex:1,flexWrap:"wrap"}}>
+                        {h.estado_anterior?<span style={{background:cOld.bg,color:cOld.text,fontSize:11,fontWeight:500,padding:"2px 8px",borderRadius:20}}>{h.estado_anterior}</span>:<span style={{fontSize:11,color:T.t3}}>—</span>}
+                        <span style={{fontSize:12,color:T.t3}}>→</span>
+                        <span style={{background:cNew.bg,color:cNew.text,fontSize:11,fontWeight:500,padding:"2px 8px",borderRadius:20}}>{h.estado_nuevo}</span>
+                      </div>
+                      {h.notas&&<div style={{fontSize:11,color:T.t3,fontStyle:"italic",minWidth:100}}>{h.notas}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PESTAÑA USUARIOS */}
         {tab==="usuarios"&&user.role==="admin"&&<UsersPanel users={users} currentUser={user} T={T} onNew={()=>setUserModal("new")} onEdit={u=>setUserModal(u)} onDelete={deleteUser}/>}
       </div>
 
@@ -338,8 +379,8 @@ export default function App() {
 function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEstado}) {
   const next=nextStates(user.role,o.estado);
   let bg,border;
-  if (highlight){bg=idx%2===0?"#EEEDFE":"#E4E2F8";border="1.5px solid #7F77DD";}
-  else if (groupColors){bg=idx%2===0?groupColors.light:groupColors.dark;border=`1.5px solid ${groupColors.border}`;}
+  if(highlight){bg=idx%2===0?"#EEEDFE":"#E4E2F8";border="1.5px solid #7F77DD";}
+  else if(groupColors){bg=idx%2===0?groupColors.light:groupColors.dark;border=`1.5px solid ${groupColors.border}`;}
   else{bg=idx%2===0?T.surface:T.surf2;border=`0.5px solid ${T.border}`;}
   return (
     <div style={{background:bg,border,borderRadius:12,padding:"14px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",position:"relative",overflow:"hidden"}}>
@@ -349,7 +390,7 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
         <div style={{fontSize:14,fontWeight:500,color:highlight?"#3C3489":T.t1}}>{o.producto}</div>
         <div style={{fontSize:11,color:T.t3}}>{o.categoria} · {o.cantidad} ud.{o.precio?` · €${(o.precio*o.cantidad).toLocaleString("es-ES")}`:""}</div>
       </div>
-      {["admin","proveedor"].includes(user.role)&&<div style={{fontSize:12,color:T.t2,minWidth:100}}>{o.solicitante}</div>}
+      {["admin","proveedor","responsable"].includes(user.role)&&<div style={{fontSize:12,color:T.t2,minWidth:100}}>{o.solicitante}</div>}
       <div style={{minWidth:80}}><Pill estado={o.estado}/></div>
       <div style={{fontSize:11,color:T.t3,minWidth:100}}>{o.estado==="Entregado"&&o.fechaEntrega?<span style={{color:"#27500A",fontWeight:500}}>Entregado {o.fechaEntrega}</span>:o.fechaEstimada?`Est. ${o.fechaEstimada}`:"—"}</div>
       <div style={{display:"flex",gap:6,alignItems:"center"}}>
@@ -357,7 +398,7 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
           <select defaultValue="" onChange={e=>{if(e.target.value){onChangeEstado(e.target.value);e.target.value="";}}} onClick={e=>e.stopPropagation()}
             style={{fontSize:11,padding:"4px 8px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer",maxWidth:180}}>
             <option value="" disabled>→ Cambiar estado</option>
-            {next.map(s=>{ const c=ECOLOR[s]; return <option key={s} value={s} style={{background:c.bg,color:c.text}}>→ {s}</option>;})}
+            {next.map(s=>{const c=ECOLOR[s];return <option key={s} value={s} style={{background:c.bg,color:c.text}}>→ {s}</option>;})}
           </select>
         )}
         <button onClick={onSelect} style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer"}}>Ver</button>
@@ -391,9 +432,15 @@ function DetailPanel({order:o,user,T,onClose,onUpdate,onDelete,onChangeEstado}) 
         <Pill estado={o.estado}/>
         {next.length>0&&(<div><div style={{fontSize:11,color:T.t3,marginBottom:8}}>Cambiar estado</div><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{next.map(s=>{const c=ECOLOR[s];return <button key={s} onClick={()=>{onChangeEstado(s);setForm(f=>({...f,estado:s}));}} style={{fontSize:12,padding:"5px 12px",borderRadius:20,border:`1px solid ${c.btn}`,background:c.bg,color:c.text,cursor:"pointer",fontWeight:500}}>→ {s}</button>;})}</div></div>)}
         <hr style={{border:"none",borderTop:`0.5px solid ${T.border}`}}/>
-        <Field label="Producto" k="producto"/><Field label="Categoría" k="categoria" opts={CATEGORIAS}/><Field label="Cantidad" k="cantidad" type="number"/><Field label="Precio unitario (€)" k="precio" type="number"/>
+        <Field label="Producto" k="producto"/>
+        <Field label="Categoría" k="categoria" opts={CATEGORIAS}/>
+        <Field label="Cantidad" k="cantidad" type="number"/>
+        <Field label="Precio unitario (€)" k="precio" type="number"/>
         {form.precio>0&&<div style={{marginBottom:14}}><div style={{fontSize:11,color:T.t3,marginBottom:4}}>Importe total</div><div style={{fontSize:14,fontWeight:500,color:T.t1}}>€{(form.precio*form.cantidad).toLocaleString("es-ES")}</div></div>}
-        <Field label="Solicitante" k="solicitante"/><Field label="Fecha estimada" k="fechaEstimada" type="date"/><Field label="Nº seguimiento / albarán" k="tracking"/><Field label="Notas" k="notas" type="textarea"/>
+        <Field label="Solicitante" k="solicitante"/>
+        <Field label="Fecha estimada" k="fechaEstimada" type="date"/>
+        <Field label="Nº seguimiento / albarán" k="tracking"/>
+        <Field label="Notas" k="notas" type="textarea"/>
         {["En garantía / incidencia","Solucionado"].includes(form.estado)&&(
           <div style={{marginBottom:14}}>
             <div style={{fontSize:11,color:"#791F1F",marginBottom:4,fontWeight:500}}>Notas de incidencia / garantía</div>
@@ -417,7 +464,7 @@ function NewOrderModal({user,T,onClose,onCreate}) {
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
   const valid=form.producto&&form.cantidad>0;
   const inp={padding:"8px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
-  const handle=async()=>{ if(!valid) return; setSaving(true); await onCreate(form); setSaving(false); };
+  const handle=async()=>{if(!valid)return;setSaving(true);await onCreate(form);setSaving(false);};
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.3)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
       <div style={{background:T.surface,borderRadius:16,padding:"1.75rem",width:"100%",maxWidth:460,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
@@ -451,7 +498,7 @@ function UsersPanel({users,currentUser,T,onNew,onEdit,onDelete}) {
         <button onClick={onNew} style={BP}>+ Nuevo usuario</button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
-        {visible.map((u,i)=>{ const r=ROLES[u.role]; const isSelf=u.id===currentUser.id; return (
+        {visible.map((u,i)=>{const r=ROLES[u.role];const isSelf=u.id===currentUser.id;return(
           <div key={u.id} style={{background:i%2===0?T.surface:T.surf2,border:`0.5px solid ${T.border}`,borderRadius:12,padding:"16px"}}>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
               <Avatar name={u.name} role={u.role} size={40}/>
@@ -487,7 +534,7 @@ function UserModal({userData,T,onSave,onClose}) {
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
   const valid=form.name&&form.email&&(userData?true:!!form.password);
   const inp={padding:"8px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
-  const handleSave=async()=>{ if(!valid) return; setSaving(true); const data={...form}; if(userData&&!form.password) data.password=userData.password; await onSave(data); setSaving(false); };
+  const handleSave=async()=>{if(!valid)return;setSaving(true);const data={...form};if(userData&&!form.password)data.password=userData.password;await onSave(data);setSaving(false);};
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.3)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
       <div style={{background:T.surface,borderRadius:16,padding:"1.75rem",width:"100%",maxWidth:440,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
