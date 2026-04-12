@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { supabase } from "./supabase";
 
 const ROLES = {
@@ -56,25 +56,30 @@ const Avatar = ({name,role,size=38}) => { const r=ROLES[role]||ROLES.empleado; c
 const Toast = ({msg,type}) => <div style={{position:"fixed",top:16,right:16,zIndex:999,background:type==="ok"?"#E1F5EE":"#FBEAF0",color:type==="ok"?"#085041":"#72243E",padding:"10px 18px",borderRadius:10,fontSize:13,fontWeight:500,border:`0.5px solid ${type==="ok"?"#9FE1CB":"#F4C0D1"}`}}>{msg}</div>;
 const DarkToggle = ({dark,onToggle}) => <button onClick={onToggle} style={{width:32,height:32,borderRadius:"50%",border:"0.5px solid rgba(128,128,128,0.25)",background:dark?"#3a3a36":"#eeece7",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{dark?"☀️":"🌙"}</button>;
 const PulseBar = () => (<><style>{`@keyframes barPulse{0%,100%{opacity:1;width:6px;background:#534AB7;}50%{opacity:0.85;width:10px;background:#AFA9EC;}}`}</style><div style={{position:"absolute",left:0,top:0,bottom:0,width:6,borderRadius:"12px 0 0 12px",background:"#534AB7",animation:"barPulse 1s ease-in-out infinite"}}/></>);
+const Spinner = () => <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"3rem",color:"#9c9a92",fontSize:13}}>Cargando…</div>;
 const BP = {background:"#AFA9EC",color:"#26215C",border:"none",borderRadius:8,padding:"8px 16px",fontSize:13,fontWeight:500,cursor:"pointer"};
-const IconSun = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>;
-const IconMoon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
-const IconEye = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
-const IconEyeOff = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
 
 function SectionHead({label,count,bg,border,dot,text,cBg,cText,collapsed,onToggle,pulsing}) {
-  return (<><style>{`@keyframes headPulse{0%,100%{opacity:1;background:${bg}}50%{opacity:0.7;background:${cBg}20}}`}</style>
-    <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:10,marginBottom:collapsed?0:12,padding:"10px 14px",borderRadius:10,background:bg,border:`0.5px solid ${border}`,cursor:"pointer",userSelect:"none",animation:pulsing?"headPulse 1.4s ease-in-out infinite":"none",transition:"margin .2s"}}>
-      <span style={{width:10,height:10,borderRadius:"50%",background:dot,display:"inline-block",flexShrink:0}}></span>
-      <span style={{fontSize:13,fontWeight:500,color:text,flex:1}}>{label}</span>
-      <span style={{background:cBg,color:cText,fontSize:11,fontWeight:500,padding:"2px 10px",borderRadius:20,marginRight:6}}>{count}</span>
-      <span style={{fontSize:12,color:text,opacity:0.7,transition:"transform .2s",display:"inline-block",transform:collapsed?"rotate(-90deg)":"rotate(0deg)"}}>▾</span>
-    </div></>);
+  return (
+    <>
+      <style>{`@keyframes headPulse{0%,100%{opacity:1;background:${bg}}50%{opacity:0.7;background:${cBg}20}}`}</style>
+      <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:10,marginBottom:collapsed?0:12,padding:"10px 14px",borderRadius:10,background:bg,border:`0.5px solid ${border}`,cursor:"pointer",userSelect:"none",animation:pulsing?"headPulse 1.4s ease-in-out infinite":"none",transition:"margin .2s"}}>
+        <span style={{width:10,height:10,borderRadius:"50%",background:dot,display:"inline-block",flexShrink:0}}></span>
+        <span style={{fontSize:13,fontWeight:500,color:text,flex:1}}>{label}</span>
+        <span style={{background:cBg,color:cText,fontSize:11,fontWeight:500,padding:"2px 10px",borderRadius:20,marginRight:6}}>{count}</span>
+        <span style={{fontSize:12,color:text,opacity:0.7,transition:"transform .2s",display:"inline-block",transform:collapsed?"rotate(-90deg)":"rotate(0deg)"}}>▾</span>
+      </div>
+    </>
+  );
 }
 
 function LoginForm({T, onLogin}) {
-  const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [showPwd,setShowPwd]=useState(false); const [error,setError]=useState(""); const [loading,setLoading]=useState(false);
-  const inp={padding:"13px 16px",borderRadius:10,border:`0.5px solid ${T.border}`,fontSize:15,background:T.bg||"#f7f6f3",color:T.t1,width:"100%",outline:"none",transition:"border .15s"};
+  const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
+  const [showPwd,setShowPwd]=useState(false);
+  const [error,setError]=useState("");
+  const [loading,setLoading]=useState(false);
+  const inp={padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
   const handleLogin=async()=>{
     setLoading(true);setError("");
     const{data,error:e}=await supabase.auth.signInWithPassword({email,password});
@@ -84,36 +89,20 @@ function LoginForm({T, onLogin}) {
   };
   return (
     <div>
-      <div style={{marginBottom:16}}>
-        <div style={{fontSize:13,color:T.t3,marginBottom:6,fontWeight:500}}>Email</div>
-        <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setError("");}}
-          placeholder="correo@empresa.com" style={inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
+      <div style={{marginBottom:14}}>
+        <div style={{fontSize:11,color:T.t3,marginBottom:4}}>Email</div>
+        <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setError("");}} placeholder="correo@empresa.com" style={inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
       </div>
-      <div style={{marginBottom:8}}>
-        <div style={{fontSize:13,color:T.t3,marginBottom:6,fontWeight:500}}>Contraseña</div>
+      <div style={{marginBottom:6}}>
+        <div style={{fontSize:11,color:T.t3,marginBottom:4}}>Contraseña</div>
         <div style={{position:"relative"}}>
-          <input type={showPwd?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setError("");}}
-            placeholder="••••••••" style={{...inp,paddingRight:48}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
-          <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.t3,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
-            {showPwd?<IconEyeOff/>:<IconEye/>}
-          </button>
+          <input type={showPwd?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setError("");}} placeholder="••••••••" style={{...inp,paddingRight:40}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
+          <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:14,color:T.t3}}>{showPwd?"🙈":"👁️"}</button>
         </div>
       </div>
-      {error&&(
-        <div style={{fontSize:13,color:"#791F1F",background:"#FCEBEB",padding:"10px 14px",borderRadius:10,marginTop:12,border:"0.5px solid #F09595",display:"flex",alignItems:"center",gap:8}}>
-          <span style={{fontSize:16}}>⚠️</span>{error}
-        </div>
-      )}
-      <button onClick={handleLogin} disabled={loading} style={{
-        width:"100%",marginTop:20,padding:"14px",borderRadius:12,
-        background:loading?"#B0AADB":"#534AB7",color:"#fff",
-        border:"none",fontSize:16,fontWeight:500,cursor:loading?"not-allowed":"pointer",
-        transition:"background .15s, transform .1s",
-      }}
-      onMouseEnter={e=>{if(!loading)e.currentTarget.style.background="#3C3489";}}
-      onMouseLeave={e=>{if(!loading)e.currentTarget.style.background="#534AB7";}}>
-        {loading?"Verificando…":"Entrar"}
-      </button>
+      {error&&<div style={{fontSize:12,color:"#72243E",background:"#FBEAF0",padding:"8px 12px",borderRadius:8,marginTop:8,marginBottom:4}}>{error}</div>}
+      <div style={{marginBottom:16}}/>
+      <button onClick={handleLogin} disabled={loading} style={{...BP,width:"100%",padding:"11px",borderRadius:10,fontSize:14,opacity:loading?0.7:1}}>{loading?"Entrando…":"Entrar"}</button>
     </div>
   );
 }
@@ -205,17 +194,17 @@ export default function App() {
 
   const updateOrder=async(id,changes)=>{
     const dbChanges={};
-    if(changes.estado!==undefined)           dbChanges.estado=changes.estado;
-    if(changes.producto)                     dbChanges.producto=changes.producto;
-    if(changes.categoria)                    dbChanges.categoria=changes.categoria;
-    if(changes.cantidad)                     dbChanges.cantidad=changes.cantidad;
-    if(changes.precio!==undefined)           dbChanges.precio=changes.precio;
-    if(changes.solicitante)                  dbChanges.solicitante=changes.solicitante;
-    if(changes.fechaEstimada!==undefined)    dbChanges.fecha_estimada=changes.fechaEstimada||null;
-    if(changes.fechaEntrega!==undefined)     dbChanges.fecha_entrega=changes.fechaEntrega||"";
-    if(changes.tracking!==undefined)         dbChanges.tracking=changes.tracking||"";
-    if(changes.notas!==undefined)            dbChanges.notas=changes.notas||"";
-    if(changes.notasIncidencia!==undefined)  dbChanges.notas_incidencia=changes.notasIncidencia||"";
+    if(changes.estado!==undefined)          dbChanges.estado=changes.estado;
+    if(changes.producto)                    dbChanges.producto=changes.producto;
+    if(changes.categoria)                   dbChanges.categoria=changes.categoria;
+    if(changes.cantidad)                    dbChanges.cantidad=changes.cantidad;
+    if(changes.precio!==undefined)          dbChanges.precio=changes.precio;
+    if(changes.solicitante)                 dbChanges.solicitante=changes.solicitante;
+    if(changes.fechaEstimada!==undefined)   dbChanges.fecha_estimada=changes.fechaEstimada||null;
+    if(changes.fechaEntrega!==undefined)    dbChanges.fecha_entrega=changes.fechaEntrega||"";
+    if(changes.tracking!==undefined)        dbChanges.tracking=changes.tracking||"";
+    if(changes.notas!==undefined)           dbChanges.notas=changes.notas||"";
+    if(changes.notasIncidencia!==undefined) dbChanges.notas_incidencia=changes.notasIncidencia||"";
     await supabase.from("pedidos").update(dbChanges).eq("id",id);
     setOrders(p=>p.map(o=>o.id===id?{...o,...changes}:o));
     setSelected(p=>p?.id===id?{...p,...changes}:p);
@@ -269,54 +258,14 @@ export default function App() {
   };
 
   if(!user) return (
-    <div style={{minHeight:"100vh",background:dark?"#1a1a18":"#f0eef8",display:"flex",fontFamily:"system-ui,sans-serif"}}>
-      {/* Panel izquierdo decorativo */}
-      <div style={{display:"none",flex:1,background:"#534AB7",alignItems:"center",justifyContent:"center",padding:"3rem",flexDirection:"column",gap:24,minWidth:0}}>
-        <div style={{width:64,height:64,borderRadius:16,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <div style={{width:32,height:32,borderRadius:"50%",background:"#AFA9EC"}}></div>
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"system-ui,sans-serif"}}>
+      <div style={{background:T.surface,borderRadius:16,border:`0.5px solid ${T.border}`,padding:"2.5rem 2rem",width:"100%",maxWidth:400}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+          <div style={{fontSize:18,fontWeight:500,color:T.t1}}>Portal de pedidos</div>
+          <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)}/>
         </div>
-        <div style={{color:"#fff",fontSize:28,fontWeight:500,textAlign:"center",lineHeight:1.3}}>Portal de pedidos</div>
-        <div style={{color:"rgba(255,255,255,0.6)",fontSize:15,textAlign:"center",maxWidth:280,lineHeight:1.6}}>Gestión centralizada de pedidos entre empresa y proveedor</div>
-        <div style={{display:"flex",flexDirection:"column",gap:12,marginTop:16,width:"100%",maxWidth:280}}>
-          {["Seguimiento en tiempo real","Control por roles","Historial completo"].map(f=>(
-            <div key={f} style={{display:"flex",alignItems:"center",gap:10,color:"rgba(255,255,255,0.85)",fontSize:14}}>
-              <span style={{width:20,height:20,borderRadius:"50%",background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,flexShrink:0}}>✓</span>
-              {f}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Panel derecho — formulario */}
-      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",minWidth:0}}>
-        <div style={{width:"100%",maxWidth:420}}>
-          {/* Logo / marca */}
-          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:40}}>
-            <div style={{width:44,height:44,borderRadius:12,background:"#534AB7",display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <div style={{width:20,height:20,borderRadius:"50%",background:"#AFA9EC"}}></div>
-            </div>
-            <div>
-              <div style={{fontSize:18,fontWeight:500,color:T.t1}}>Portal de pedidos</div>
-              <div style={{fontSize:12,color:T.t3}}>Sistema de gestión</div>
-            </div>
-            <div style={{marginLeft:"auto"}}>
-              <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)}/>
-            </div>
-          </div>
-
-          {/* Tarjeta */}
-          <div style={{background:T.surface,borderRadius:20,padding:"2.5rem",border:`0.5px solid ${T.border}`}}>
-            <div style={{marginBottom:28}}>
-              <div style={{fontSize:24,fontWeight:500,color:T.t1,marginBottom:6}}>Bienvenido</div>
-              <div style={{fontSize:15,color:T.t3}}>Introduce tus credenciales para acceder</div>
-            </div>
-            <LoginForm T={T} onLogin={u=>{setUser(u);setTab("pedidos");setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
-          </div>
-
-          <div style={{textAlign:"center",marginTop:24,fontSize:12,color:T.t3}}>
-            ¿Problemas para acceder? Contacta con el administrador
-          </div>
-        </div>
+        <div style={{fontSize:13,color:T.t3,marginBottom:24}}>Introduce tus credenciales</div>
+        <LoginForm T={T} onLogin={u=>{setUser(u);setTab("pedidos");setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
       </div>
     </div>
   );
@@ -325,13 +274,11 @@ export default function App() {
   const enCurso=visible.filter(o=>!["Entregado","Cancelado",...ESTADOS_PROVEEDOR_POST].includes(o.estado)&&(user.role!=="proveedor"||o.estado!=="Nuevo pedido"));
   const finalizados=visible.filter(o=>["Entregado","Cancelado",...ESTADOS_PROVEEDOR_POST].includes(o.estado));
   const rp=(o,i,highlight=false,gc=null)=>({order:o,user,idx:i,highlight,T,groupColors:gc,onSelect:()=>setSelected(o),onChangeEstado:est=>changeEstado(o.id,est)});
-
   const tabs=["pedidos","historial","usuarios"].filter(t=>t!=="usuarios"||user.role==="admin");
 
   return (
     <div style={{minHeight:"100vh",background:T.bg,fontFamily:"system-ui,sans-serif"}}>
       {toast&&<Toast {...toast}/>}
-
       <div style={{background:T.surface,borderBottom:`0.5px solid ${T.border}`,padding:"0 1.5rem",display:"flex",alignItems:"center",justifyContent:"space-between",height:52}}>
         <div style={{display:"flex",alignItems:"center",gap:16}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -351,8 +298,6 @@ export default function App() {
       </div>
 
       <div style={{maxWidth:1100,margin:"0 auto",padding:"1.5rem 1rem"}}>
-
-        {/* PESTAÑA PEDIDOS */}
         {tab==="pedidos"&&<>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:16,alignItems:"center"}}>
             <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar pedido, producto, solicitante…" style={{flex:1,minWidth:200,padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1}}/>
@@ -393,12 +338,10 @@ export default function App() {
           </>}
         </>}
 
-        {/* PESTAÑA HISTORIAL */}
         {tab==="historial"&&(
           <div>
             <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center"}}>
-              <input value={histSearch} onChange={e=>setHistSearch(e.target.value)} placeholder="Buscar por pedido, usuario, estado…"
-                style={{flex:1,padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1}}/>
+              <input value={histSearch} onChange={e=>setHistSearch(e.target.value)} placeholder="Buscar por pedido, usuario, estado…" style={{flex:1,padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1}}/>
               <span style={{fontSize:12,color:T.t3,whiteSpace:"nowrap"}}>{visibleHist.length} entradas</span>
             </div>
             {visibleHist.length===0?<div style={{textAlign:"center",padding:"3rem",color:T.t3,fontSize:14}}>No hay movimientos registrados</div>:(
@@ -432,7 +375,6 @@ export default function App() {
           </div>
         )}
 
-        {/* PESTAÑA USUARIOS */}
         {tab==="usuarios"&&user.role==="admin"&&<UsersPanel users={users} currentUser={user} T={T} onNew={()=>setUserModal("new")} onEdit={u=>setUserModal(u)} onDelete={deleteUser}/>}
       </div>
 
@@ -445,7 +387,7 @@ export default function App() {
 
 function EstadoModal({order:o,next,T,onSelect,onClose}) {
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui,sans-serif",backdropFilter:"blur(2px)"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui,sans-serif"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.surface,borderRadius:20,padding:"2rem",width:"100%",maxWidth:420,border:`0.5px solid ${T.border}`,boxShadow:"0 24px 64px rgba(0,0,0,0.18)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
           <div>
@@ -459,24 +401,16 @@ function EstadoModal({order:o,next,T,onSelect,onClose}) {
           {next.map(s=>{
             const c=ECOLOR[s];
             return (
-              <button key={s} onClick={()=>{onSelect(s);onClose();}} style={{
-                width:"100%",padding:"14px 18px",borderRadius:12,
-                border:`1.5px solid ${c.btn}`,background:c.bg,color:c.text,
-                fontSize:15,fontWeight:500,cursor:"pointer",
-                display:"flex",alignItems:"center",gap:10,
-                transition:"transform .1s, box-shadow .1s",
-              }}
-              onMouseEnter={e=>{e.currentTarget.style.transform="scale(1.02)";}}
-              onMouseLeave={e=>{e.currentTarget.style.transform="scale(1)";}}>
+              <button key={s} onClick={()=>{onSelect(s);onClose();}} style={{width:"100%",padding:"14px 18px",borderRadius:12,border:`1.5px solid ${c.btn}`,background:c.bg,color:c.text,fontSize:15,fontWeight:500,cursor:"pointer",display:"flex",alignItems:"center",gap:10}}
+                onMouseEnter={e=>e.currentTarget.style.transform="scale(1.02)"}
+                onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
                 <span style={{width:10,height:10,borderRadius:"50%",background:c.btn,flexShrink:0,display:"inline-block"}}></span>
                 {s}
               </button>
             );
           })}
         </div>
-        <div style={{marginTop:16,paddingTop:16,borderTop:`0.5px solid ${T.border}`,fontSize:12,color:T.t3,textAlign:"center"}}>
-          Pulsa fuera para cancelar
-        </div>
+        <div style={{marginTop:16,paddingTop:16,borderTop:`0.5px solid ${T.border}`,fontSize:12,color:T.t3,textAlign:"center"}}>Pulsa fuera para cancelar</div>
       </div>
     </div>
   );
@@ -489,13 +423,11 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
   if(highlight){bg=idx%2===0?"#EEEDFE":"#E4E2F8";border="1.5px solid #7F77DD";}
   else if(groupColors){bg=idx%2===0?groupColors.light:groupColors.dark;border=`1.5px solid ${groupColors.border}`;}
   else{bg=idx%2===0?T.surface:T.surf2;border=`0.5px solid ${T.border}`;}
-
   const handleRowClick=(e)=>{
     if(e.target.tagName==="BUTTON") return;
     if(next.length>0) setShowEstado(true);
     else onSelect();
   };
-
   return (
     <>
       {showEstado&&<EstadoModal order={o} next={next} T={T} onSelect={onChangeEstado} onClose={()=>setShowEstado(false)}/>}
@@ -606,7 +538,7 @@ function UsersPanel({users,currentUser,T,onNew,onEdit,onDelete}) {
         <button onClick={onNew} style={BP}>+ Nuevo usuario</button>
       </div>
       <div style={{background:"#FAEEDA",border:"0.5px solid #FAC775",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#633806"}}>
-        Para crear usuarios nuevos ve a <strong>Supabase → SQL Editor</strong> y ejecuta los comandos proporcionados por el administrador del sistema. Los usuarios creados desde aquí no podrán iniciar sesión hasta completar ese paso.
+        Para crear usuarios nuevos ve a <strong>Supabase → SQL Editor</strong> y ejecuta los comandos proporcionados. Los usuarios creados desde aquí no podrán iniciar sesión hasta completar ese paso.
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
         {visible.map((u,i)=>{const r=ROLES[u.role];const isSelf=u.id===currentUser.id;return(
@@ -656,7 +588,7 @@ function UserModal({userData,T,onSave,onClose}) {
           <div style={{fontSize:11,color:T.t3,marginBottom:4}}>Contraseña{userData&&<span style={{fontWeight:400}}> · dejar vacío para no cambiar</span>}</div>
           <div style={{position:"relative"}}>
             <input type={showPwd?"text":"password"} value={form.password} onChange={e=>f("password",e.target.value)} placeholder={userData?"••••••••":"Nueva contraseña"} style={{...inp,paddingRight:40}}/>
-            <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.t3,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>{showPwd?<IconEyeOff/>:<IconEye/>}</button>
+            <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:14,color:T.t3}}>{showPwd?"🙈":"👁️"}</button>
           </div>
         </div>
         <div style={{marginBottom:20}}><div style={{fontSize:11,color:T.t3,marginBottom:4}}>Rol</div><select value={form.role} onChange={e=>f("role",e.target.value)} style={inp}>{Object.entries(ROLES).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</select></div>
