@@ -57,7 +57,10 @@ const Toast = ({msg,type}) => <div style={{position:"fixed",top:16,right:16,zInd
 const DarkToggle = ({dark,onToggle}) => <button onClick={onToggle} style={{width:32,height:32,borderRadius:"50%",border:"0.5px solid rgba(128,128,128,0.25)",background:dark?"#3a3a36":"#eeece7",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{dark?"☀️":"🌙"}</button>;
 const PulseBar = () => (<><style>{`@keyframes barPulse{0%,100%{opacity:1;width:6px;background:#534AB7;}50%{opacity:0.85;width:10px;background:#AFA9EC;}}`}</style><div style={{position:"absolute",left:0,top:0,bottom:0,width:6,borderRadius:"12px 0 0 12px",background:"#534AB7",animation:"barPulse 1s ease-in-out infinite"}}/></>);
 const BP = {background:"#AFA9EC",color:"#26215C",border:"none",borderRadius:8,padding:"8px 16px",fontSize:13,fontWeight:500,cursor:"pointer"};
-const Spinner = () => <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"3rem",color:"#9c9a92",fontSize:13}}>Cargando…</div>;
+const IconSun = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>;
+const IconMoon = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>;
+const IconEye = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
+const IconEyeOff = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
 
 function SectionHead({label,count,bg,border,dot,text,cBg,cText,collapsed,onToggle,pulsing}) {
   return (<><style>{`@keyframes headPulse{0%,100%{opacity:1;background:${bg}}50%{opacity:0.7;background:${cBg}20}}`}</style>
@@ -91,8 +94,8 @@ function LoginForm({T, onLogin}) {
         <div style={{position:"relative"}}>
           <input type={showPwd?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setError("");}}
             placeholder="••••••••" style={{...inp,paddingRight:48}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
-          <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:T.t3,padding:0}}>
-            {showPwd?"🙈":"👁️"}
+          <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.t3,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
+            {showPwd?<IconEyeOff/>:<IconEye/>}
           </button>
         </div>
       </div>
@@ -653,7 +656,7 @@ function UserModal({userData,T,onSave,onClose}) {
           <div style={{fontSize:11,color:T.t3,marginBottom:4}}>Contraseña{userData&&<span style={{fontWeight:400}}> · dejar vacío para no cambiar</span>}</div>
           <div style={{position:"relative"}}>
             <input type={showPwd?"text":"password"} value={form.password} onChange={e=>f("password",e.target.value)} placeholder={userData?"••••••••":"Nueva contraseña"} style={{...inp,paddingRight:40}}/>
-            <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:14,color:T.t3}}>{showPwd?"🙈":"👁️"}</button>
+            <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:T.t3,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>{showPwd?<IconEyeOff/>:<IconEye/>}</button>
           </div>
         </div>
         <div style={{marginBottom:20}}><div style={{fontSize:11,color:T.t3,marginBottom:4}}>Rol</div><select value={form.role} onChange={e=>f("role",e.target.value)} style={inp}>{Object.entries(ROLES).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</select></div>
