@@ -74,7 +74,7 @@ function SectionHead({label,count,bg,border,dot,text,cBg,cText,collapsed,onToggl
 
 function LoginForm({T, onLogin}) {
   const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [showPwd,setShowPwd]=useState(false); const [error,setError]=useState(""); const [loading,setLoading]=useState(false);
-  const inp={padding:"13px 16px",borderRadius:10,border:`0.5px solid ${T.border}`,fontSize:15,background:T.surface,color:T.t1,width:"100%",outline:"none",transition:"border .15s"};
+  const inp={padding:"13px 16px",borderRadius:10,border:`0.5px solid ${T.border}`,fontSize:15,background:T.surface,color:T.t1,width:"100%",outline:"none",transition:"border .15s",colorScheme:dark?"dark":"light"};
   const handleLogin=async()=>{
     setLoading(true);setError("");
     const{data,error:e}=await supabase.auth.signInWithPassword({email,password});
