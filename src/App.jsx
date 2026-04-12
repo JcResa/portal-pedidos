@@ -258,14 +258,45 @@ export default function App() {
   };
 
   if(!user) return (
-    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"system-ui,sans-serif"}}>
-      <div style={{background:T.surface,borderRadius:16,border:`0.5px solid ${T.border}`,padding:"2.5rem 2rem",width:"100%",maxWidth:400}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-          <div style={{fontSize:18,fontWeight:500,color:T.t1}}>Portal de pedidos</div>
-          <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)}/>
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui,sans-serif",padding:"1.5rem"}}>
+      <div style={{display:"flex",width:"100%",maxWidth:820,borderRadius:20,overflow:"hidden",border:`0.5px solid ${T.border}`,minHeight:520}}>
+
+        {/* Panel izquierdo */}
+        <div style={{width:240,flexShrink:0,background:"#534AB7",padding:"2rem 1.5rem",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+          <div>
+            <div style={{width:48,height:48,borderRadius:14,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:"1.5rem"}}>
+              <div style={{width:22,height:22,borderRadius:"50%",background:"#AFA9EC"}}></div>
+            </div>
+            <div style={{color:"#fff",fontSize:18,fontWeight:500,lineHeight:1.4,marginBottom:8}}>Portal de pedidos</div>
+            <div style={{color:"rgba(255,255,255,0.55)",fontSize:13,lineHeight:1.6,marginBottom:"1.5rem"}}>Sistema de gestión entre empresa y proveedor</div>
+            {["Seguimiento en tiempo real","Control por roles","Historial completo","Acceso desde cualquier lugar"].map(f=>(
+              <div key={f} style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:"#AFA9EC",flexShrink:0}}></div>
+                <div style={{color:"rgba(255,255,255,0.75)",fontSize:12}}>{f}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{color:"rgba(255,255,255,0.25)",fontSize:11}}>v1.0</div>
         </div>
-        <div style={{fontSize:13,color:T.t3,marginBottom:24}}>Introduce tus credenciales</div>
-        <LoginForm T={T} onLogin={u=>{setUser(u);setTab("pedidos");setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
+
+        {/* Panel derecho */}
+        <div style={{flex:1,background:T.surface,padding:"2.5rem 2rem",display:"flex",flexDirection:"column",justifyContent:"center"}}>
+          <div style={{marginBottom:28}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div style={{display:"inline-flex",alignItems:"center",gap:5,background:"#EEEDFE",color:"#3C3489",fontSize:11,fontWeight:500,padding:"3px 10px",borderRadius:20}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:"#534AB7"}}></div>
+                Portal activo
+              </div>
+              <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)}/>
+            </div>
+            <div style={{fontSize:22,fontWeight:500,color:T.t1,marginBottom:6}}>Bienvenido</div>
+            <div style={{fontSize:14,color:T.t2}}>Introduce tus credenciales para acceder</div>
+          </div>
+          <LoginForm T={T} onLogin={u=>{setUser(u);setTab("pedidos");setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
+          <div style={{height:"0.5px",background:T.border,margin:"20px 0"}}></div>
+          <div style={{fontSize:12,color:T.t3,textAlign:"center"}}>¿Problemas para acceder? Contacta con el administrador</div>
+        </div>
+
       </div>
     </div>
   );
