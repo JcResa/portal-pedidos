@@ -71,7 +71,7 @@ function SectionHead({label,count,bg,border,dot,text,cBg,cText,collapsed,onToggl
 
 function LoginForm({T, onLogin}) {
   const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [showPwd,setShowPwd]=useState(false); const [error,setError]=useState(""); const [loading,setLoading]=useState(false);
-  const inp={padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1,width:"100%"};
+  const inp={padding:"13px 16px",borderRadius:10,border:`0.5px solid ${T.border}`,fontSize:15,background:T.bg||"#f7f6f3",color:T.t1,width:"100%",outline:"none",transition:"border .15s"};
   const handleLogin=async()=>{
     setLoading(true);setError("");
     const{data,error:e}=await supabase.auth.signInWithPassword({email,password});
@@ -81,16 +81,36 @@ function LoginForm({T, onLogin}) {
   };
   return (
     <div>
-      <div style={{marginBottom:14}}><div style={{fontSize:11,color:T.t3,marginBottom:4}}>Email</div><input type="email" value={email} onChange={e=>{setEmail(e.target.value);setError("");}} placeholder="correo@empresa.com" style={inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/></div>
-      <div style={{marginBottom:6}}><div style={{fontSize:11,color:T.t3,marginBottom:4}}>Contraseña</div>
+      <div style={{marginBottom:16}}>
+        <div style={{fontSize:13,color:T.t3,marginBottom:6,fontWeight:500}}>Email</div>
+        <input type="email" value={email} onChange={e=>{setEmail(e.target.value);setError("");}}
+          placeholder="correo@empresa.com" style={inp} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
+      </div>
+      <div style={{marginBottom:8}}>
+        <div style={{fontSize:13,color:T.t3,marginBottom:6,fontWeight:500}}>Contraseña</div>
         <div style={{position:"relative"}}>
-          <input type={showPwd?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setError("");}} placeholder="••••••••" style={{...inp,paddingRight:40}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
-          <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:14,color:T.t3}}>{showPwd?"🙈":"👁️"}</button>
+          <input type={showPwd?"text":"password"} value={password} onChange={e=>{setPassword(e.target.value);setError("");}}
+            placeholder="••••••••" style={{...inp,paddingRight:48}} onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
+          <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:16,color:T.t3,padding:0}}>
+            {showPwd?"🙈":"👁️"}
+          </button>
         </div>
       </div>
-      {error&&<div style={{fontSize:12,color:"#72243E",background:"#FBEAF0",padding:"8px 12px",borderRadius:8,marginTop:8,marginBottom:4}}>{error}</div>}
-      <div style={{marginBottom:16}}/>
-      <button onClick={handleLogin} disabled={loading} style={{...BP,width:"100%",padding:"11px",borderRadius:10,fontSize:14,opacity:loading?0.7:1}}>{loading?"Entrando…":"Entrar"}</button>
+      {error&&(
+        <div style={{fontSize:13,color:"#791F1F",background:"#FCEBEB",padding:"10px 14px",borderRadius:10,marginTop:12,border:"0.5px solid #F09595",display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:16}}>⚠️</span>{error}
+        </div>
+      )}
+      <button onClick={handleLogin} disabled={loading} style={{
+        width:"100%",marginTop:20,padding:"14px",borderRadius:12,
+        background:loading?"#B0AADB":"#534AB7",color:"#fff",
+        border:"none",fontSize:16,fontWeight:500,cursor:loading?"not-allowed":"pointer",
+        transition:"background .15s, transform .1s",
+      }}
+      onMouseEnter={e=>{if(!loading)e.currentTarget.style.background="#3C3489";}}
+      onMouseLeave={e=>{if(!loading)e.currentTarget.style.background="#534AB7";}}>
+        {loading?"Verificando…":"Entrar"}
+      </button>
     </div>
   );
 }
@@ -246,14 +266,54 @@ export default function App() {
   };
 
   if(!user) return (
-    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",fontFamily:"system-ui,sans-serif"}}>
-      <div style={{background:T.surface,borderRadius:16,border:`0.5px solid ${T.border}`,padding:"2.5rem 2rem",width:"100%",maxWidth:400}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-          <div style={{fontSize:18,fontWeight:500,color:T.t1}}>Portal de pedidos</div>
-          <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)}/>
+    <div style={{minHeight:"100vh",background:dark?"#1a1a18":"#f0eef8",display:"flex",fontFamily:"system-ui,sans-serif"}}>
+      {/* Panel izquierdo decorativo */}
+      <div style={{display:"none",flex:1,background:"#534AB7",alignItems:"center",justifyContent:"center",padding:"3rem",flexDirection:"column",gap:24,minWidth:0}}>
+        <div style={{width:64,height:64,borderRadius:16,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{width:32,height:32,borderRadius:"50%",background:"#AFA9EC"}}></div>
         </div>
-        <div style={{fontSize:13,color:T.t3,marginBottom:24}}>Introduce tus credenciales</div>
-        <LoginForm T={T} onLogin={u=>{setUser(u);setTab("pedidos");setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
+        <div style={{color:"#fff",fontSize:28,fontWeight:500,textAlign:"center",lineHeight:1.3}}>Portal de pedidos</div>
+        <div style={{color:"rgba(255,255,255,0.6)",fontSize:15,textAlign:"center",maxWidth:280,lineHeight:1.6}}>Gestión centralizada de pedidos entre empresa y proveedor</div>
+        <div style={{display:"flex",flexDirection:"column",gap:12,marginTop:16,width:"100%",maxWidth:280}}>
+          {["Seguimiento en tiempo real","Control por roles","Historial completo"].map(f=>(
+            <div key={f} style={{display:"flex",alignItems:"center",gap:10,color:"rgba(255,255,255,0.85)",fontSize:14}}>
+              <span style={{width:20,height:20,borderRadius:"50%",background:"rgba(255,255,255,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,flexShrink:0}}>✓</span>
+              {f}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Panel derecho — formulario */}
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"2rem",minWidth:0}}>
+        <div style={{width:"100%",maxWidth:420}}>
+          {/* Logo / marca */}
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:40}}>
+            <div style={{width:44,height:44,borderRadius:12,background:"#534AB7",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <div style={{width:20,height:20,borderRadius:"50%",background:"#AFA9EC"}}></div>
+            </div>
+            <div>
+              <div style={{fontSize:18,fontWeight:500,color:T.t1}}>Portal de pedidos</div>
+              <div style={{fontSize:12,color:T.t3}}>Sistema de gestión</div>
+            </div>
+            <div style={{marginLeft:"auto"}}>
+              <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)}/>
+            </div>
+          </div>
+
+          {/* Tarjeta */}
+          <div style={{background:T.surface,borderRadius:20,padding:"2.5rem",border:`0.5px solid ${T.border}`}}>
+            <div style={{marginBottom:28}}>
+              <div style={{fontSize:24,fontWeight:500,color:T.t1,marginBottom:6}}>Bienvenido</div>
+              <div style={{fontSize:15,color:T.t3}}>Introduce tus credenciales para acceder</div>
+            </div>
+            <LoginForm T={T} onLogin={u=>{setUser(u);setTab("pedidos");setCollapsed({nuevos:true,curso:true,finalizados:true});}}/>
+          </div>
+
+          <div style={{textAlign:"center",marginTop:24,fontSize:12,color:T.t3}}>
+            ¿Problemas para acceder? Contacta con el administrador
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -538,9 +598,12 @@ function UsersPanel({users,currentUser,T,onNew,onEdit,onDelete}) {
   const visible=users.filter(u=>u.name.toLowerCase().includes(search.toLowerCase())||u.email.toLowerCase().includes(search.toLowerCase()));
   return (
     <div>
-      <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center"}}>
+      <div style={{display:"flex",gap:10,marginBottom:12,alignItems:"center"}}>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar usuario…" style={{flex:1,padding:"8px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,fontSize:13,background:T.surface,color:T.t1}}/>
         <button onClick={onNew} style={BP}>+ Nuevo usuario</button>
+      </div>
+      <div style={{background:"#FAEEDA",border:"0.5px solid #FAC775",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#633806"}}>
+        Para crear usuarios nuevos ve a <strong>Supabase → SQL Editor</strong> y ejecuta los comandos proporcionados por el administrador del sistema. Los usuarios creados desde aquí no podrán iniciar sesión hasta completar ese paso.
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
         {visible.map((u,i)=>{const r=ROLES[u.role];const isSelf=u.id===currentUser.id;return(
