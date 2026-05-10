@@ -4,16 +4,17 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
-/* ─── Paleta corporativa verde oliva ─────────────────────────────────────── */
-const OL = {
-  50:  "#F2F4EE",
-  100: "#DDE3D0",
-  200: "#C3CEAF",
-  400: "#8FA870",
-  600: "#5E7A40",
-  800: "#3A5226",
-  900: "#243318",
+/* ─── Paletas por empresa ─────────────────────────────────────────────────── */
+const EMPRESAS = {
+  Ubesol:  { label:"Ubesol",  50:"#F2F4EE", 100:"#DDE3D0", 200:"#C3CEAF", 400:"#8FA870", 600:"#5E7A40", 800:"#3A5226", 900:"#243318", darkBg:"#13140f", darkSurf:"#1a1d14", darkSurf2:"#22261a", darkSidebar:"#161910" },
+  Maverick:{ label:"Maverick",50:"#E6F1FB", 100:"#B5D4F4", 200:"#85B7EB", 400:"#378ADD", 600:"#185FA5", 800:"#0C447C", 900:"#042C53", darkBg:"#0a0f18", darkSurf:"#101828", darkSurf2:"#162032", darkSidebar:"#0c1420" },
+  Izzon:   { label:"Izzon",   50:"#FAEEDA", 100:"#FAC775", 200:"#EF9F27", 400:"#BA7517", 600:"#854F0B", 800:"#633806", 900:"#412402", darkBg:"#130e06", darkSurf:"#1e160a", darkSurf2:"#271d0e", darkSidebar:"#18110a" },
 };
+const EMPRESAS_LISTA = ["Ubesol","Maverick","Izzon"];
+
+// Paleta activa: se actualiza al iniciar sesión (default Ubesol)
+let OL = {...EMPRESAS.Ubesol};
+const setEmpresaPaleta = (empresa) => { OL = {...(EMPRESAS[empresa]||EMPRESAS.Ubesol)}; };
 
 /* ─── Constantes ─────────────────────────────────────────────────────────── */
 const ROLES = {
@@ -74,15 +75,15 @@ const nextStates = (role,cur) => ESTADOS.filter(s=>s!==cur&&canTransition(role,c
 
 /* ─── Tokens por modo ────────────────────────────────────────────────────── */
 const makeT = (dark) => ({
-  bg:        dark ? "#13140f" : "#f2f4ee",
-  surface:   dark ? "#1a1d14" : "#ffffff",
-  surf2:     dark ? "#22261a" : "#f2f4ee",
-  t1:        dark ? "#e6e8df" : "#1a1a14",
-  t2:        dark ? "#9a9d8e" : "#5e6354",
-  t3:        dark ? "#5a5e50" : "#9a9d8e",
+  bg:        dark ? OL.darkBg    : "#f5f5f3",
+  surface:   dark ? OL.darkSurf  : "#ffffff",
+  surf2:     dark ? OL.darkSurf2 : OL[50],
+  t1:        dark ? "#e8e8e4"    : "#1a1a14",
+  t2:        dark ? "#9a9d8e"    : "#5e6354",
+  t3:        dark ? "#5a5e50"    : "#9a9d8e",
   border:    dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)",
   borderM:   dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.13)",
-  sidebarBg: dark ? "#161910" : "#ffffff",
+  sidebarBg: dark ? OL.darkSidebar : "#ffffff",
 });
 
 /* ─── Átomos ─────────────────────────────────────────────────────────────── */
@@ -193,7 +194,7 @@ function Sidebar({user,tab,onTab,pendingCount,T}) {
           <Avatar name={user.name} role={user.role} size={30}/>
           <div style={{minWidth:0}}>
             <div style={{fontSize:12,fontWeight:500,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user.name}</div>
-            <div style={{fontSize:10,color:T.t3}}>{ROLES[user.role]?.label}</div>
+            <div style={{fontSize:10,color:T.t3}}>{ROLES[user.role]?.label}{user.empresa?` · ${user.empresa}`:""}</div>
           </div>
         </div>
       </div>
@@ -661,8 +662,10 @@ function UsersPanel({users,currentUser,T,onNew,onEdit,onDelete}) {
                 </div>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <RoleBadge role={u.role}/>
-                <div style={{display:"flex",gap:6}}>
+                <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                  <RoleBadge role={u.role}/>
+                  {u.empresa&&(()=>{const e=EMPRESAS[u.empresa]||EMPRESAS.Ubesol;return <span style={{fontSize:10,fontWeight:500,padding:"2px 7px",borderRadius:20,background:e[50],color:e[800],border:`0.5px solid ${e[200]}`}}>{u.empresa}</span>;})()}
+                </div>
                   <button onClick={()=>onEdit(u)} style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer"}}>Editar</button>
                   {!isSelf&&(confirmId===u.id
                     ?<div style={{display:"flex",gap:4,alignItems:"center"}}><span style={{fontSize:11,color:"#791F1F"}}>¿Seguro?</span><button onClick={()=>{onDelete(u.id);setConfirmId(null);}} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:"0.5px solid #F09595",background:"#FCEBEB",color:"#791F1F",cursor:"pointer"}}>Sí</button><button onClick={()=>setConfirmId(null)} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer"}}>No</button></div>
@@ -680,7 +683,7 @@ function UsersPanel({users,currentUser,T,onNew,onEdit,onDelete}) {
 
 /* ─── UserModal ──────────────────────────────────────────────────────────── */
 function UserModal({userData,T,onSave,onClose}) {
-  const [form,setForm]=useState(userData?{...userData,password:""}:{name:"",email:"",role:"empleado",password:""});
+  const [form,setForm]=useState(userData?{...userData,password:""}:{name:"",email:"",role:"empleado",empresa:"Ubesol",password:""});
   const [showPwd,setShowPwd]=useState(false);
   const [saving,setSaving]=useState(false);
   const f=(k,v)=>setForm(p=>({...p,[k]:v}));
@@ -688,6 +691,7 @@ function UserModal({userData,T,onSave,onClose}) {
   const inp=mkInp(T);
   const FL=({children})=><div style={{fontSize:11,color:T.t3,marginBottom:4,fontWeight:500,textTransform:"uppercase",letterSpacing:"0.04em"}}>{children}</div>;
   const handleSave=async()=>{if(!valid)return;setSaving(true);const data={...form};if(userData&&!form.password)data.password=userData.password;await onSave(data);setSaving(false);};
+  const emp=EMPRESAS[form.empresa]||EMPRESAS.Ubesol;
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}>
       <div style={{background:T.surface,borderRadius:14,padding:"1.75rem",width:"100%",maxWidth:440,maxHeight:"90vh",overflowY:"auto",border:`0.5px solid ${T.borderM}`}} onClick={e=>e.stopPropagation()}>
@@ -701,8 +705,29 @@ function UserModal({userData,T,onSave,onClose}) {
             <button onClick={()=>setShowPwd(p=>!p)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:14,color:T.t3}}>{showPwd?"🙈":"👁️"}</button>
           </div>
         </div>
-        <div style={{marginBottom:20}}><FL>Rol</FL><select value={form.role} onChange={e=>f("role",e.target.value)} style={inp}>{Object.entries(ROLES).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</select></div>
-        {form.role&&<div style={{background:ROLES[form.role].bg,borderRadius:8,padding:"10px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:8,border:`0.5px solid ${T.border}`}}><Avatar name={form.name||"?"} role={form.role} size={32}/><div><div style={{fontSize:13,fontWeight:500,color:ROLES[form.role].text}}>{form.name||"Nombre del usuario"}</div><div style={{fontSize:11,color:ROLES[form.role].text,opacity:.8}}>{ROLES[form.role].label}</div></div></div>}
+        <div style={{marginBottom:14}}><FL>Rol</FL><select value={form.role} onChange={e=>f("role",e.target.value)} style={inp}>{Object.entries(ROLES).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}</select></div>
+        <div style={{marginBottom:20}}>
+          <FL>Empresa</FL>
+          <div style={{display:"flex",gap:8}}>
+            {EMPRESAS_LISTA.map(emp=>{
+              const e=EMPRESAS[emp];
+              const sel=form.empresa===emp;
+              return (
+                <div key={emp} onClick={()=>f("empresa",emp)} style={{flex:1,padding:"10px 8px",borderRadius:10,border:`${sel?"2px":"0.5px"} solid ${sel?e[600]:T.border}`,background:sel?e[50]:T.surface,cursor:"pointer",textAlign:"center",transition:"all .15s"}}>
+                  <div style={{width:20,height:20,borderRadius:"50%",background:e[600],margin:"0 auto 6px"}}/>
+                  <div style={{fontSize:12,fontWeight:sel?500:400,color:sel?e[800]:T.t2}}>{emp}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {form.role&&<div style={{background:emp[50],borderRadius:8,padding:"10px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:10,border:`0.5px solid ${T.border}`}}>
+          <div style={{width:36,height:36,borderRadius:"50%",background:emp[600],flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:500,color:"#fff"}}>{(form.name||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}</div>
+          <div>
+            <div style={{fontSize:13,fontWeight:500,color:emp[800]}}>{form.name||"Nombre del usuario"}</div>
+            <div style={{fontSize:11,color:emp[600]}}>{ROLES[form.role]?.label} · {form.empresa||"Sin empresa"}</div>
+          </div>
+        </div>}
         <div style={{display:"flex",gap:8}}>
           <button disabled={!valid||saving} onClick={handleSave} style={{...mkBtnPrimary(),opacity:valid&&!saving?1:.5,cursor:valid&&!saving?"pointer":"not-allowed"}}>{saving?"Guardando…":userData?"Guardar cambios":"Crear usuario"}</button>
           <button onClick={onClose} style={mkBtnGhost(T)}>Cancelar</button>
@@ -725,7 +750,7 @@ function LoginForm({T,onLogin}) {
     const{data,error:e}=await supabase.auth.signInWithPassword({email,password});
     if(e){setError("Email o contraseña incorrectos");setLoading(false);return;}
     const{data:u}=await supabase.from("usuarios").select("*").eq("id",data.user.id).single();
-    if(u) onLogin(u); else{setError("Usuario no encontrado");setLoading(false);}
+    if(u) { setEmpresaPaleta(u.empresa||"Ubesol"); onLogin(u); } else{setError("Usuario no encontrado");setLoading(false);}
   };
   return (
     <div>
@@ -848,8 +873,8 @@ export default function App() {
   const changeEstado=async(id,estado)=>{const order=orders.find(o=>o.id===id);const ch={estado};if(estado==="Entregado")ch.fechaEntrega=fmtDate();await updateOrder(id,ch);await addHistorial(id,order?.estado||"",estado);showToast(`Estado → ${estado}`);};
   const createOrder=async(data)=>{const newId=nextPedidoId(orders);const row={id:newId,producto:data.producto,categoria:data.categoria,cantidad:data.cantidad,precio:data.precio||0,solicitante:user.name,estado:"Nuevo pedido",fecha_solicitud:new Date().toISOString().slice(0,10),fecha_estimada:data.fechaEstimada||null,tracking:"",fecha_entrega:"",notas:data.notas||"",notas_incidencia:""};await supabase.from("pedidos").insert(row);await addHistorial(newId,"","Nuevo pedido","Pedido creado");await loadOrders();showToast("Pedido creado");};
   const saveUser=async(data)=>{
-    if(data.id){await supabase.from("usuarios").update({name:data.name,email:data.email,role:data.role}).eq("id",data.id);setUsers(p=>p.map(u=>u.id===data.id?{...u,...data}:u));if(user.id===data.id)setUser(d=>({...d,...data}));showToast("Usuario actualizado");}
-    else{const{data:ad,error}=await supabase.auth.signUp({email:data.email,password:data.password});if(error){showToast("Error: "+error.message,"err");return;}await supabase.from("usuarios").insert({id:ad.user.id,name:data.name,email:data.email,role:data.role});await loadUsers();showToast("Usuario creado");}
+    if(data.id){await supabase.from("usuarios").update({name:data.name,email:data.email,role:data.role,empresa:data.empresa||"Ubesol"}).eq("id",data.id);setUsers(p=>p.map(u=>u.id===data.id?{...u,...data}:u));if(user.id===data.id){setUser(d=>({...d,...data}));setEmpresaPaleta(data.empresa||"Ubesol");}showToast("Usuario actualizado");}
+    else{const{data:ad,error}=await supabase.auth.signUp({email:data.email,password:data.password});if(error){showToast("Error: "+error.message,"err");return;}await supabase.from("usuarios").insert({id:ad.user.id,name:data.name,email:data.email,role:data.role,empresa:data.empresa||"Ubesol"});await loadUsers();showToast("Usuario creado");}
     setUserModal(null);
   };
   const deleteUser=async(id)=>{if(id===user.id){showToast("No puedes eliminarte","err");return;}await supabase.from("usuarios").delete().eq("id",id);setUsers(p=>p.filter(u=>u.id!==id));showToast("Usuario eliminado");};
@@ -915,6 +940,7 @@ export default function App() {
         {/* Topbar delgado */}
         <div style={{background:T.surface,borderBottom:`0.5px solid ${T.border}`,padding:"0 20px",display:"flex",alignItems:"center",justifyContent:"flex-end",height:46,gap:10,flexShrink:0}}>
           <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)} T={T}/>
+          {user.empresa&&(()=>{const e=EMPRESAS[user.empresa]||EMPRESAS.Ubesol;return <span style={{fontSize:10,fontWeight:500,padding:"2px 9px",borderRadius:20,background:e[50],color:e[800],border:`0.5px solid ${e[200]}`}}>{e.label}</span>;})()}
           <RoleBadge role={user.role}/>
           <button onClick={async()=>{await supabase.auth.signOut();setUser(null);setSelected(null);}} style={{fontSize:11,color:T.t2,background:"none",border:`0.5px solid ${T.border}`,borderRadius:6,padding:"4px 10px",cursor:"pointer"}}>Salir</button>
         </div>
