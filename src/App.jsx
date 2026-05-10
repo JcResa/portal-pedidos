@@ -761,6 +761,9 @@ export default function App() {
   const [filterCat,setFilterCat]=useState("Todas");
   const [search,setSearch]=useState("");
   const [histSearch,setHistSearch]=useState("");
+  const [histSort,setHistSort]=useState("fecha_desc");   // fecha_desc | fecha_asc | pedido_asc | pedido_desc | estado_nuevo | usuario
+  const [histFiltroEstado,setHistFiltroEstado]=useState("Todos");
+  const [histFiltroUsuario,setHistFiltroUsuario]=useState("Todos");
   const [toast,setToast]=useState(null);
   const [userModal,setUserModal]=useState(null);
   const [collapsed,setCollapsed]=useState({nuevos:true,curso:true,finalizados:true});
@@ -800,7 +803,28 @@ export default function App() {
   const exportPDF=(data,nombre)=>{const doc=new jsPDF({orientation:"landscape"});doc.setFontSize(14);doc.text("Historial de pedidos",14,16);doc.setFontSize(9);doc.setTextColor(120);doc.text(`Exportado el ${fmtDateTime(new Date().toISOString())} · ${data.length} entradas`,14,22);doc.autoTable({startY:28,head:[["Fecha","Pedido","Usuario","Rol","Estado anterior","Estado nuevo","Notas"]],body:data.map(h=>[fmtDateTime(h.created_at),h.pedido_id,h.usuario_nombre,ROLES[h.usuario_role]?.label||h.usuario_role,h.estado_anterior||"—",h.estado_nuevo,h.notas||""]),styles:{fontSize:8,cellPadding:3},headStyles:{fillColor:[94,122,64],textColor:255,fontStyle:"bold"},alternateRowStyles:{fillColor:[242,244,238]}});doc.save(`${nombre}.pdf`);};
 
   const visible=useMemo(()=>{let r=orders;if(user&&!["admin","proveedor","responsable"].includes(user.role))r=r.filter(o=>o.solicitante===user.name);if(filterEstado!=="Todos")r=r.filter(o=>o.estado===filterEstado);if(filterCat!=="Todas")r=r.filter(o=>o.categoria===filterCat);if(search)r=r.filter(o=>[o.producto,o.id,o.solicitante].some(v=>v.toLowerCase().includes(search.toLowerCase())));return r;},[orders,user,filterEstado,filterCat,search]);
-  const visibleHist=useMemo(()=>{if(!histSearch)return historial;return historial.filter(h=>[h.pedido_id,h.usuario_nombre,h.estado_anterior,h.estado_nuevo,h.notas].some(v=>v&&v.toLowerCase().includes(histSearch.toLowerCase())));},[historial,histSearch]);
+  const visibleHist=useMemo(()=>{
+    let r=[...historial];
+    // búsqueda libre
+    if(histSearch) r=r.filter(h=>[h.pedido_id,h.usuario_nombre,h.estado_anterior,h.estado_nuevo,h.notas].some(v=>v&&v.toLowerCase().includes(histSearch.toLowerCase())));
+    // filtro estado nuevo
+    if(histFiltroEstado!=="Todos") r=r.filter(h=>h.estado_nuevo===histFiltroEstado);
+    // filtro usuario
+    if(histFiltroUsuario!=="Todos") r=r.filter(h=>h.usuario_nombre===histFiltroUsuario);
+    // ordenación
+    r.sort((a,b)=>{
+      switch(histSort){
+        case "fecha_asc":    return new Date(a.created_at)-new Date(b.created_at);
+        case "fecha_desc":   return new Date(b.created_at)-new Date(a.created_at);
+        case "pedido_asc":   return a.pedido_id.localeCompare(b.pedido_id);
+        case "pedido_desc":  return b.pedido_id.localeCompare(a.pedido_id);
+        case "estado_nuevo": return (a.estado_nuevo||"").localeCompare(b.estado_nuevo||"");
+        case "usuario":      return (a.usuario_nombre||"").localeCompare(b.usuario_nombre||"");
+        default: return 0;
+      }
+    });
+    return r;
+  },[historial,histSearch,histSort,histFiltroEstado,histFiltroUsuario]);
 
   const addHistorial=async(pedidoId,estadoAnterior,estadoNuevo,notas="")=>{await supabase.from("historial").insert({pedido_id:pedidoId,usuario_nombre:user.name,usuario_role:user.role,estado_anterior:estadoAnterior,estado_nuevo:estadoNuevo,notas});};
   const updateOrder=async(id,changes)=>{
@@ -927,41 +951,94 @@ export default function App() {
             </div>
           )}
 
-          {tab==="historial"&&(
-            <div style={{padding:"18px 20px"}}>
-              <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center",flexWrap:"wrap"}}>
-                <div style={{flex:1,minWidth:180,position:"relative"}}><div style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.t3,pointerEvents:"none"}}><SearchIcon/></div><input value={histSearch} onChange={e=>setHistSearch(e.target.value)} placeholder="Buscar por pedido, usuario, estado…" style={{...mkInp(T),paddingLeft:32}}/></div>
-                <span style={{fontSize:12,color:T.t3,whiteSpace:"nowrap"}}>{visibleHist.length} entradas</span>
-              </div>
-              <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
-                {[{label:"↓ XLSX (vista)",fn:()=>exportXLSX(visibleHist,"historial-filtrado"),bg:"#EAF3DE",color:"#27500A",border:"#C0DD97"},{label:"↓ PDF (vista)",fn:()=>exportPDF(visibleHist,"historial-filtrado"),bg:"#FCEBEB",color:"#791F1F",border:"#F09595"},{label:"↓ XLSX (todo)",fn:()=>exportXLSX(historial,"historial-completo"),bg:OL[50],color:OL[800],border:OL[200]},{label:"↓ PDF (todo)",fn:()=>exportPDF(historial,"historial-completo"),bg:"#FAEEDA",color:"#633806",border:"#FAC775"}].map(b=>(
-                  <button key={b.label} onClick={b.fn} style={{fontSize:12,padding:"6px 14px",borderRadius:8,border:`0.5px solid ${b.border}`,background:b.bg,color:b.color,cursor:"pointer",fontWeight:500}}>{b.label}</button>
-                ))}
-              </div>
-              {visibleHist.length===0?<div style={{textAlign:"center",padding:"4rem",color:T.t3,fontSize:14}}>No hay movimientos registrados</div>:(
-                <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                  {visibleHist.map((h,i)=>{
-                    const r=ROLES[h.usuario_role]||ROLES.empleado;
-                    const cOld=ECOLOR[h.estado_anterior]||{bg:"#F1EFE8",text:"#444441"};
-                    const cNew=ECOLOR[h.estado_nuevo]||{bg:"#F1EFE8",text:"#444441"};
-                    return (
-                      <div key={h.id} style={{background:i%2===0?T.surface:T.surf2,border:`0.5px solid ${T.border}`,borderRadius:10,padding:"11px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-                        <div style={{fontSize:11,color:T.t3,minWidth:116,flexShrink:0,fontFamily:"monospace"}}>{fmtDateTime(h.created_at)}</div>
-                        <div style={{display:"flex",alignItems:"center",gap:7,minWidth:130,flexShrink:0}}><Avatar name={h.usuario_nombre} role={h.usuario_role} size={24}/><div><div style={{fontSize:12,fontWeight:500,color:T.t1}}>{h.usuario_nombre}</div><span style={{background:r.bg,color:r.text,fontSize:9,fontWeight:500,padding:"1px 6px",borderRadius:20}}>{r.label}</span></div></div>
-                        <div style={{fontSize:11,fontWeight:500,color:T.t2,minWidth:72,flexShrink:0,fontFamily:"monospace"}}>{h.pedido_id}</div>
-                        <div style={{display:"flex",alignItems:"center",gap:6,flex:1,flexWrap:"wrap"}}>
-                          {h.estado_anterior?<span style={{background:cOld.bg,color:cOld.text,fontSize:11,fontWeight:500,padding:"2px 8px",borderRadius:20}}>{h.estado_anterior}</span>:<span style={{fontSize:11,color:T.t3}}>—</span>}
-                          <span style={{fontSize:11,color:T.t3}}>→</span>
-                          <span style={{background:cNew.bg,color:cNew.text,fontSize:11,fontWeight:500,padding:"2px 8px",borderRadius:20}}>{h.estado_nuevo}</span>
-                        </div>
-                        {h.notas&&<div style={{fontSize:11,color:T.t3,fontStyle:"italic",minWidth:100}}>{h.notas}</div>}
-                      </div>
-                    );
-                  })}
+          {tab==="historial"&&(()=>{
+            // usuarios únicos para el filtro desplegable
+            const usuariosUnicos=[...new Set(historial.map(h=>h.usuario_nombre))].sort();
+            // cabecera de columna clicable
+            const ColH=({label,sortKey,sortKeyAlt,minWidth})=>{
+              const isActive=histSort===sortKey||histSort===sortKeyAlt;
+              const isAsc=histSort===sortKey;
+              const toggle=()=>setHistSort(isAsc&&sortKeyAlt?sortKeyAlt:sortKey);
+              return (
+                <div onClick={toggle} style={{minWidth,fontSize:11,fontWeight:500,color:isActive?OL[600]:T.t3,cursor:"pointer",display:"flex",alignItems:"center",gap:3,userSelect:"none",flexShrink:0}}>
+                  {label}
+                  <svg width="10" height="10" viewBox="0 0 10 14" fill="none" stroke={isActive?OL[600]:T.t3} strokeWidth="1.5">
+                    {isAsc
+                      ? <><path d="M5 1v12M1 9l4 4 4-4" opacity="1"/><path d="M1 5l4-4 4 4" opacity="0.3"/></>
+                      : <><path d="M5 1v12M1 5l4-4 4 4" opacity="1"/><path d="M1 9l4 4 4-4" opacity="0.3"/></>}
+                  </svg>
                 </div>
-              )}
-            </div>
-          )}
+              );
+            };
+            return (
+              <div style={{padding:"18px 20px"}}>
+                {/* Barra de controles */}
+                <div style={{display:"flex",gap:8,marginBottom:10,alignItems:"center",flexWrap:"wrap"}}>
+                  <div style={{flex:1,minWidth:200,position:"relative"}}>
+                    <div style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.t3,pointerEvents:"none"}}><SearchIcon/></div>
+                    <input value={histSearch} onChange={e=>setHistSearch(e.target.value)} placeholder="Buscar pedido, usuario, estado, notas…" style={{...mkInp(T),paddingLeft:32}}/>
+                  </div>
+                  <select value={histFiltroEstado} onChange={e=>setHistFiltroEstado(e.target.value)} style={{...selInp,minWidth:140}}>
+                    <option value="Todos">Todos los estados</option>
+                    {ESTADOS.map(e=><option key={e} value={e}>{e}</option>)}
+                  </select>
+                  <select value={histFiltroUsuario} onChange={e=>setHistFiltroUsuario(e.target.value)} style={{...selInp,minWidth:130}}>
+                    <option value="Todos">Todos los usuarios</option>
+                    {usuariosUnicos.map(u=><option key={u} value={u}>{u}</option>)}
+                  </select>
+                  {(histSearch||histFiltroEstado!=="Todos"||histFiltroUsuario!=="Todos")&&(
+                    <button onClick={()=>{setHistSearch("");setHistFiltroEstado("Todos");setHistFiltroUsuario("Todos");}} style={{fontSize:11,padding:"6px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t3,cursor:"pointer",whiteSpace:"nowrap"}}>Limpiar</button>
+                  )}
+                  <span style={{fontSize:12,color:T.t3,whiteSpace:"nowrap",marginLeft:"auto"}}>{visibleHist.length} entradas</span>
+                </div>
+
+                {/* Exportar */}
+                <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
+                  {[{label:"↓ XLSX (vista)",fn:()=>exportXLSX(visibleHist,"historial-filtrado"),bg:"#EAF3DE",color:"#27500A",border:"#C0DD97"},{label:"↓ PDF (vista)",fn:()=>exportPDF(visibleHist,"historial-filtrado"),bg:"#FCEBEB",color:"#791F1F",border:"#F09595"},{label:"↓ XLSX (todo)",fn:()=>exportXLSX(historial,"historial-completo"),bg:OL[50],color:OL[800],border:OL[200]},{label:"↓ PDF (todo)",fn:()=>exportPDF(historial,"historial-completo"),bg:"#FAEEDA",color:"#633806",border:"#FAC775"}].map(b=>(
+                    <button key={b.label} onClick={b.fn} style={{fontSize:12,padding:"5px 12px",borderRadius:8,border:`0.5px solid ${b.border}`,background:b.bg,color:b.color,cursor:"pointer",fontWeight:500}}>{b.label}</button>
+                  ))}
+                </div>
+
+                {/* Cabecera de tabla clicable */}
+                <div style={{display:"flex",alignItems:"center",gap:12,padding:"6px 16px",marginBottom:4,flexWrap:"nowrap",overflowX:"auto"}}>
+                  <ColH label="Fecha"   sortKey="fecha_desc"  sortKeyAlt="fecha_asc"  minWidth={116}/>
+                  <ColH label="Usuario" sortKey="usuario"     sortKeyAlt={null}        minWidth={130}/>
+                  <ColH label="Pedido"  sortKey="pedido_asc"  sortKeyAlt="pedido_desc" minWidth={72}/>
+                  <ColH label="Estado"  sortKey="estado_nuevo" sortKeyAlt={null}       minWidth={200}/>
+                </div>
+
+                {/* Filas */}
+                {visibleHist.length===0
+                  ? <div style={{textAlign:"center",padding:"4rem",color:T.t3,fontSize:14}}>No hay movimientos que coincidan</div>
+                  : <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                      {visibleHist.map((h,i)=>{
+                        const r=ROLES[h.usuario_role]||ROLES.empleado;
+                        const cOld=ECOLOR[h.estado_anterior]||{bg:"#F1EFE8",text:"#444441"};
+                        const cNew=ECOLOR[h.estado_nuevo]||{bg:"#F1EFE8",text:"#444441"};
+                        return (
+                          <div key={h.id} style={{background:i%2===0?T.surface:T.surf2,border:`0.5px solid ${T.border}`,borderRadius:10,padding:"10px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"nowrap",overflowX:"auto"}}>
+                            <div style={{fontSize:11,color:T.t3,minWidth:116,flexShrink:0,fontFamily:"monospace"}}>{fmtDateTime(h.created_at)}</div>
+                            <div style={{display:"flex",alignItems:"center",gap:7,minWidth:130,flexShrink:0}}>
+                              <Avatar name={h.usuario_nombre} role={h.usuario_role} size={24}/>
+                              <div>
+                                <div style={{fontSize:12,fontWeight:500,color:T.t1,whiteSpace:"nowrap"}}>{h.usuario_nombre}</div>
+                                <span style={{background:r.bg,color:r.text,fontSize:9,fontWeight:500,padding:"1px 6px",borderRadius:20}}>{r.label}</span>
+                              </div>
+                            </div>
+                            <div style={{fontSize:11,fontWeight:500,color:T.t2,minWidth:72,flexShrink:0,fontFamily:"monospace"}}>{h.pedido_id}</div>
+                            <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:200,flexWrap:"nowrap"}}>
+                              {h.estado_anterior?<span style={{background:cOld.bg,color:cOld.text,fontSize:11,fontWeight:500,padding:"2px 8px",borderRadius:20,whiteSpace:"nowrap"}}>{h.estado_anterior}</span>:<span style={{fontSize:11,color:T.t3,flexShrink:0}}>—</span>}
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke={T.t3} strokeWidth="1.4" style={{flexShrink:0}}><path d="M2 6h8M7 3l3 3-3 3"/></svg>
+                              <span style={{background:cNew.bg,color:cNew.text,fontSize:11,fontWeight:500,padding:"2px 8px",borderRadius:20,whiteSpace:"nowrap"}}>{h.estado_nuevo}</span>
+                            </div>
+                            {h.notas&&<div style={{fontSize:11,color:T.t3,fontStyle:"italic",minWidth:80,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:180}}>{h.notas}</div>}
+                          </div>
+                        );
+                      })}
+                    </div>}
+              </div>
+            );
+          })()}
 
           {tab==="usuarios"&&user.role==="admin"&&(
             <div style={{padding:"18px 20px"}}>
