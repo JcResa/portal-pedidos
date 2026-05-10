@@ -649,29 +649,41 @@ function UsersPanel({users,currentUser,T,onNew,onEdit,onDelete}) {
         <button onClick={onNew} style={mkBtnPrimary()}>+ Nuevo usuario</button>
       </div>
       <div style={{background:"#FAEEDA",border:"0.5px solid #FAC775",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#633806"}}>Para crear usuarios nuevos ve a <strong>Supabase → SQL Editor</strong> y ejecuta los comandos proporcionados.</div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:10}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:10}}>
         {visible.map(u=>{
           const isSelf=u.id===currentUser.id;
+          const emp=EMPRESAS[u.empresa]||EMPRESAS.Ubesol;
           return (
-            <div key={u.id} style={{background:T.surface,border:`0.5px solid ${T.border}`,borderRadius:12,padding:"16px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-                <Avatar name={u.name} role={u.role} size={40}/>
+            <div key={u.id} style={{background:T.surface,border:`0.5px solid ${T.border}`,borderRadius:12,padding:"16px",display:"flex",flexDirection:"column",gap:12}}>
+              {/* Cabecera: avatar + nombre + email */}
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:40,height:40,borderRadius:"50%",background:emp[50],flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:500,color:emp[800],border:`0.5px solid ${emp[200]}`}}>
+                  {u.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
+                </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:500,color:T.t1,display:"flex",alignItems:"center",gap:6,marginBottom:2}}>{u.name}{isSelf&&<span style={{fontSize:10,background:OL[50],color:OL[800],padding:"1px 6px",borderRadius:20}}>tú</span>}</div>
+                  <div style={{fontSize:13,fontWeight:500,color:T.t1,display:"flex",alignItems:"center",gap:6,marginBottom:2}}>
+                    <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.name}</span>
+                    {isSelf&&<span style={{fontSize:10,background:emp[50],color:emp[800],padding:"1px 6px",borderRadius:20,flexShrink:0}}>tú</span>}
+                  </div>
                   <div style={{fontSize:11,color:T.t3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
                 </div>
               </div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-                  <RoleBadge role={u.role}/>
-                  {u.empresa&&(()=>{const e=EMPRESAS[u.empresa]||EMPRESAS.Ubesol;return <span style={{fontSize:10,fontWeight:500,padding:"2px 7px",borderRadius:20,background:e[50],color:e[800],border:`0.5px solid ${e[200]}`}}>{u.empresa}</span>;})()}
-                </div>
-                  <button onClick={()=>onEdit(u)} style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer"}}>Editar</button>
-                  {!isSelf&&(confirmId===u.id
-                    ?<div style={{display:"flex",gap:4,alignItems:"center"}}><span style={{fontSize:11,color:"#791F1F"}}>¿Seguro?</span><button onClick={()=>{onDelete(u.id);setConfirmId(null);}} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:"0.5px solid #F09595",background:"#FCEBEB",color:"#791F1F",cursor:"pointer"}}>Sí</button><button onClick={()=>setConfirmId(null)} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer"}}>No</button></div>
-                    :<button onClick={()=>setConfirmId(u.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:"0.5px solid #F09595",background:"none",color:"#791F1F",cursor:"pointer"}}>Eliminar</button>
-                  )}
-                </div>
+              {/* Badges: empresa + rol */}
+              <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                <span style={{fontSize:11,fontWeight:500,padding:"3px 10px",borderRadius:20,background:emp[50],color:emp[800],border:`0.5px solid ${emp[200]}`}}>{u.empresa||"Sin empresa"}</span>
+                <RoleBadge role={u.role}/>
+              </div>
+              {/* Acciones */}
+              <div style={{display:"flex",gap:6,justifyContent:"flex-end"}}>
+                <button onClick={()=>onEdit(u)} style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer"}}>Editar</button>
+                {!isSelf&&(confirmId===u.id
+                  ?<div style={{display:"flex",gap:4,alignItems:"center"}}>
+                      <span style={{fontSize:11,color:"#791F1F"}}>¿Seguro?</span>
+                      <button onClick={()=>{onDelete(u.id);setConfirmId(null);}} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:"0.5px solid #F09595",background:"#FCEBEB",color:"#791F1F",cursor:"pointer"}}>Sí</button>
+                      <button onClick={()=>setConfirmId(null)} style={{fontSize:11,padding:"3px 8px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t1,cursor:"pointer"}}>No</button>
+                    </div>
+                  :<button onClick={()=>setConfirmId(u.id)} style={{fontSize:11,padding:"4px 10px",borderRadius:8,border:"0.5px solid #F09595",background:"none",color:"#791F1F",cursor:"pointer"}}>Eliminar</button>
+                )}
               </div>
             </div>
           );
