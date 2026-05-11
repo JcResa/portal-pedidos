@@ -61,14 +61,14 @@ const ECOLOR_DARK = {
 };
 const getECOLOR = (dark) => dark ? ECOLOR_DARK : ECOLOR_LIGHT;
 
-const getSECTION = (dark) => dark ? {
-  nuevos:      { label:"Nuevos pedidos pendientes", bg:OL.neon50,  border:OL.neon200, dot:OL.neon600, text:OL.neon600, cBg:OL.neon600, cText:"#050805", pulse:true  },
-  curso:       { label:"Pedidos en curso",          bg:"#0a2418",  border:"#1e5038",  dot:"#3EEFC0",  text:"#3EEFC0", cBg:"#3EEFC0",  cText:"#051810", pulse:false },
-  finalizados: { label:"Finalizados y cancelados",  bg:"#1e0e06",  border:"#3e2010",  dot:"#FF9060",  text:"#FF9060", cBg:"#FF9060",  cText:"#100502", pulse:false },
+const getSECTION = (T) => T.dark ? {
+  nuevos:      { label:"Nuevos pedidos pendientes", bg:OL.neon50,       border:OL.neon200,      dot:OL.neon600,    text:OL.neon600,    cBg:OL.neon600,    cText:"#050805", pulse:true  },
+  curso:       { label:"Pedidos en curso",          bg:T.accentBg,      border:T.accentBorder,  dot:T.accent,      text:T.accent,      cBg:T.accent,      cText:T.bg,      pulse:false },
+  finalizados: { label:"Finalizados y cancelados",  bg:"#1e0e06",       border:"#3e2010",       dot:"#FF9060",     text:"#FF9060",     cBg:"#FF9060",     cText:"#100502", pulse:false },
 } : {
-  nuevos:      { label:"Nuevos pedidos pendientes", bg:OL[50],    border:OL[200],   dot:OL[600],    text:OL[800],   cBg:OL[800],   cText:OL[50],    pulse:true  },
-  curso:       { label:"Pedidos en curso",          bg:"#E1F5EE", border:"#9FE1CB", dot:"#1D9E75",  text:"#085041", cBg:"#085041", cText:"#E1F5EE", pulse:false },
-  finalizados: { label:"Finalizados y cancelados",  bg:"#FAECE7", border:"#F0997B", dot:"#D85A30",  text:"#712B13", cBg:"#712B13", cText:"#FAECE7", pulse:false },
+  nuevos:      { label:"Nuevos pedidos pendientes", bg:T.accentBg,      border:T.accentBorder,  dot:T.accent,      text:T.accentText,  cBg:T.accentText,  cText:T.accentBg, pulse:true  },
+  curso:       { label:"Pedidos en curso",          bg:T.accentBg,      border:T.accentBorder,  dot:T.accent,      text:T.accentText,  cBg:T.accentText,  cText:T.accentBg, pulse:false },
+  finalizados: { label:"Finalizados y cancelados",  bg:"#FAECE7",       border:"#F0997B",       dot:"#D85A30",     text:"#712B13",     cBg:"#712B13",     cText:"#FAECE7", pulse:false },
 };
 
 /* ─── Constantes ─────────────────────────────────────────────────────────── */
@@ -181,13 +181,13 @@ const mkBtnDanger  = ()  => ({background:"transparent",border:"0.5px solid #F095
 const mkInp        = (T) => ({padding:"8px 10px",borderRadius:8,border:`0.5px solid ${T.borderM}`,fontSize:13,background:T.surface,color:T.t1,width:"100%",outline:"none"});
 
 /* ─── SectionHead ────────────────────────────────────────────────────────── */
-function SectionHead({sKey,count,collapsed,onToggle,pulsing,dark=false}) {
-  const s=getSECTION(dark)[sKey];
+function SectionHead({sKey,count,collapsed,onToggle,pulsing,T}) {
+  const s=getSECTION(T)[sKey];
   return (
     <>
       {pulsing && <style>{`@keyframes hPulse{0%,100%{opacity:1}50%{opacity:.75}}`}</style>}
       <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:s.bg,border:`0.5px solid ${s.border}`,cursor:"pointer",userSelect:"none",animation:pulsing?"hPulse 1.6s ease-in-out infinite":"none",marginBottom:collapsed?0:10,transition:"margin .2s"}}>
-        <span style={{width:8,height:8,borderRadius:"50%",background:s.dot,display:"inline-block",flexShrink:0,boxShadow:dark?`0 0 6px ${s.dot}`:"none"}}></span>
+        <span style={{width:8,height:8,borderRadius:"50%",background:s.dot,display:"inline-block",flexShrink:0,boxShadow:T.dark?`0 0 6px ${s.dot}`:"none"}}></span>
         <span style={{fontSize:13,fontWeight:500,color:s.text,flex:1}}>{s.label}</span>
         <span style={{background:s.cBg,color:s.cText,fontSize:11,fontWeight:500,padding:"2px 9px",borderRadius:20,marginRight:4}}>{count}</span>
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke={s.text} strokeWidth="1.8" style={{transform:collapsed?"rotate(-90deg)":"rotate(0deg)",transition:"transform .2s",opacity:.7}}>
@@ -1040,9 +1040,9 @@ export default function App() {
               })()}
               {loading?<Spinner T={T}/>:<>
                 {visible.length===0&&<div style={{textAlign:"center",padding:"4rem",color:T.t3,fontSize:14}}>No hay pedidos que mostrar</div>}
-                {nuevos.length>0&&<div style={{marginBottom:20}}><SectionHead sKey="nuevos" count={nuevos.length} collapsed={collapsed.nuevos} onToggle={()=>toggle("nuevos")} pulsing dark={T.dark}/>{!collapsed.nuevos&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{nuevos.map((o,i)=><OrderRow key={o.id} {...rp(o,i,true)}/>)}</div>}</div>}
-                {enCurso.length>0&&<div style={{marginBottom:20}}><SectionHead sKey="curso" count={enCurso.length} collapsed={collapsed.curso} onToggle={()=>toggle("curso")} pulsing={false} dark={T.dark}/>{!collapsed.curso&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{enCurso.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,T.dark?{light:"#0a2418",dark:"#0d2c1e",border:"#1e5038"}:{light:"#E1F5EE",dark:"#D0EDE0",border:"#9FE1CB"})}/>)}</div>}</div>}
-                {finalizados.length>0&&<div><SectionHead sKey="finalizados" count={finalizados.length} collapsed={collapsed.finalizados} onToggle={()=>toggle("finalizados")} pulsing={false} dark={T.dark}/>{!collapsed.finalizados&&<div style={{display:"flex",flexDirection:"column",gap:8,opacity:.75}}>{finalizados.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,T.dark?{light:"#1e0e06",dark:"#261208",border:"#3e2010"}:{light:"#FAECE7",dark:"#F5C4B3",border:"#F0997B"})}/>)}</div>}</div>}
+                {nuevos.length>0&&<div style={{marginBottom:20}}><SectionHead sKey="nuevos" count={nuevos.length} collapsed={collapsed.nuevos} onToggle={()=>toggle("nuevos")} pulsing T={T}/>{!collapsed.nuevos&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{nuevos.map((o,i)=><OrderRow key={o.id} {...rp(o,i,true)}/>)}</div>}</div>}
+                {enCurso.length>0&&<div style={{marginBottom:20}}><SectionHead sKey="curso" count={enCurso.length} collapsed={collapsed.curso} onToggle={()=>toggle("curso")} pulsing={false} T={T}/>{!collapsed.curso&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{enCurso.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,{light:T.accentBg,dark:T.accentBg,border:T.accentBorder})}/>)}</div>}</div>}
+                {finalizados.length>0&&<div><SectionHead sKey="finalizados" count={finalizados.length} collapsed={collapsed.finalizados} onToggle={()=>toggle("finalizados")} pulsing={false} T={T}/>{!collapsed.finalizados&&<div style={{display:"flex",flexDirection:"column",gap:8,opacity:.75}}>{finalizados.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,T.dark?{light:"#1e0e06",dark:"#261208",border:"#3e2010"}:{light:"#FAECE7",dark:"#F5C4B3",border:"#F0997B"})}/>)}</div>}</div>}
               </>}
             </div>
           )}
