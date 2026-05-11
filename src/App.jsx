@@ -1079,7 +1079,34 @@ export default function App() {
   };
   const deleteOrder=async(id)=>{await supabase.from("pedidos").delete().eq("id",id);setOrders(p=>p.filter(o=>o.id!==id));setSelected(null);showToast("Pedido eliminado");};
   const changeEstado=async(id,estado)=>{const order=orders.find(o=>o.id===id);const ch={estado};if(estado==="Entregado")ch.fechaEntrega=fmtDate();await updateOrder(id,ch);await addHistorial(id,order?.estado||"",estado);showToast(`Estado → ${estado}`);};
-  const createOrder=async(data)=>{const newId=nextPedidoId(orders);const row={id:newId,producto:data.producto,categoria:data.categoria,cantidad:data.cantidad,precio:data.precio||0,solicitante:user.name,estado:"Nuevo pedido",fecha_solicitud:new Date().toISOString().slice(0,10),fecha_estimada:data.fechaEstimada||null,tracking:"",fecha_entrega:"",notas:data.notas||"",notas_incidencia:""};await supabase.from("pedidos").insert(row);await addHistorial(newId,"","Nuevo pedido","Pedido creado");await loadOrders();showToast("Pedido creado");};
+  const createOrder=async(data)=>{
+    const newId=nextPedidoId(orders);
+    const fechaSolicitud=new Date().toISOString().slice(0,10);
+    const row={id:newId,producto:data.producto,categoria:data.categoria,cantidad:data.cantidad,precio:data.precio||0,solicitante:user.name,estado:"Nuevo pedido",fecha_solicitud:fechaSolicitud,fecha_estimada:data.fechaEstimada||null,tracking:"",fecha_entrega:"",notas:data.notas||"",notas_incidencia:""};
+    await supabase.from("pedidos").insert(row);
+    await addHistorial(newId,"","Nuevo pedido","Pedido creado");
+    await loadOrders();
+    // Notificar al proveedor por email
+    try {
+      await supabase.functions.invoke("notify-new-order",{
+        body:{
+          pedido:{
+            id:newId,
+            producto:data.producto,
+            categoria:data.categoria,
+            cantidad:data.cantidad,
+            precio:data.precio||0,
+            solicitante:user.name,
+            empresa:user.empresa||"",
+            fechaSolicitud,
+            fechaEstimada:data.fechaEstimada||"",
+            notas:data.notas||"",
+          }
+        }
+      });
+    } catch(e){ console.warn("Email no enviado:",e); }
+    showToast("Pedido creado");
+  };
   const saveUser=async(data)=>{
     if(data.id){await supabase.from("usuarios").update({name:data.name,email:data.email,role:data.role,empresa:data.empresa||"Ubesol"}).eq("id",data.id);setUsers(p=>p.map(u=>u.id===data.id?{...u,...data}:u));if(user.id===data.id){setUser(d=>({...d,...data}));setEmpresaPaleta(data.empresa||"Ubesol");}showToast("Usuario actualizado");}
     else{const{data:ad,error}=await supabase.auth.signUp({email:data.email,password:data.password});if(error){showToast("Error: "+error.message,"err");return;}await supabase.from("usuarios").insert({id:ad.user.id,name:data.name,email:data.email,role:data.role,empresa:data.empresa||"Ubesol"});await loadUsers();showToast("Usuario creado");}
