@@ -563,7 +563,7 @@ function EstadoModal({order:o,next,T,onSelect,onClose}) {
 }
 
 /* ─── OrderRow ───────────────────────────────────────────────────────────── */
-function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEstado}) {
+function OrderRow({order:o,user,users=[],idx,highlight,T,groupColors,onSelect,onChangeEstado}) {
   const next=nextStates(user.role,o.estado);
   const [showEstado,setShowEstado]=useState(false);
   let bg,border;
@@ -575,6 +575,12 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
   } else {
     bg=idx%2===0?T.surface:T.surf2;border=`0.5px solid ${T.border}`;
   }
+
+  // Empresa del solicitante (solo visible para proveedor, admin y responsable)
+  const solicitanteUser = users.find(u=>u.name===o.solicitante);
+  const empSolicitante  = solicitanteUser?.empresa;
+  const empData         = empSolicitante ? (EMPRESAS[empSolicitante]||EMPRESAS.Ubesol) : null;
+
   return (
     <>
       {showEstado&&<EstadoModal order={o} next={next} T={T} onSelect={onChangeEstado} onClose={()=>setShowEstado(false)}/>}
@@ -589,9 +595,20 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
           <div style={{fontSize:11,color:T.t3}}>{o.categoria} · {o.cantidad} ud.{o.precio?` · €${(o.precio*o.cantidad).toLocaleString("es-ES")}`:""}</div>
         </div>
         {["admin","proveedor","responsable"].includes(user.role)&&(
-          <div style={{display:"flex",alignItems:"center",gap:6,minWidth:110}}>
-            <Avatar name={o.solicitante} role="empleado" size={22}/>
-            <span style={{fontSize:12,color:T.t2}}>{o.solicitante}</span>
+          <div style={{display:"flex",alignItems:"center",gap:7,minWidth:130}}>
+            {/* Avatar del solicitante */}
+            <div style={{width:24,height:24,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:600,background:empData?empData[50]:T.surf2,color:empData?empData[800]:T.t2,border:`0.5px solid ${empData?empData[200]:T.border}`}}>
+              {o.solicitante.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()}
+            </div>
+            <div style={{minWidth:0}}>
+              <div style={{fontSize:12,color:T.t1,fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.solicitante}</div>
+              {/* Badge empresa — visible solo para proveedor */}
+              {user.role==="proveedor"&&empData&&(
+                <span style={{fontSize:10,fontWeight:500,padding:"1px 7px",borderRadius:20,background:empData[50],color:empData[800],border:`0.5px solid ${empData[200]}`,display:"inline-block",marginTop:2}}>
+                  {empSolicitante}
+                </span>
+              )}
+            </div>
           </div>
         )}
         <div style={{minWidth:80}}><Pill estado={o.estado} dark={T.dark}/></div>
@@ -1114,7 +1131,7 @@ export default function App() {
   const nuevos      = user.role==="proveedor"?visible.filter(o=>o.estado==="Nuevo pedido"):[];
   const enCurso     = visible.filter(o=>!["Entregado","Cancelado",...ESTADOS_PROVEEDOR_POST].includes(o.estado)&&(user.role!=="proveedor"||o.estado!=="Nuevo pedido"));
   const finalizados = visible.filter(o=>["Entregado","Cancelado",...ESTADOS_PROVEEDOR_POST].includes(o.estado));
-  const rp=(o,i,hl=false,gc=null)=>({order:o,user,idx:i,highlight:hl,T,groupColors:gc,onSelect:()=>setSelected(o),onChangeEstado:est=>changeEstado(o.id,est)});
+  const rp=(o,i,hl=false,gc=null)=>({order:o,user,users,idx:i,highlight:hl,T,groupColors:gc,onSelect:()=>setSelected(o),onChangeEstado:est=>changeEstado(o.id,est)});
   const pendingCount = orders.filter(o=>o.estado==="Nuevo pedido").length;
   const selInp={padding:"7px 12px",borderRadius:8,border:`0.5px solid ${T.borderM}`,fontSize:13,background:T.surface,color:T.t1,cursor:"pointer"};
 
