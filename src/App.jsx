@@ -204,7 +204,7 @@ function Sidebar({user,tab,onTab,pendingCount,T}) {
     const active = tab===key;
     return (
       <div onClick={()=>onTab(key)}
-        style={{display:"flex",alignItems:"center",gap:9,padding:"8px 14px",fontSize:13,color:active?OL[800]:T.t2,cursor:"pointer",background:active?OL[50]:"transparent",borderLeft:active?`2px solid ${OL[600]}`:"2px solid transparent",fontWeight:active?500:400,transition:"background .1s"}}>
+        style={{display:"flex",alignItems:"center",gap:9,padding:"8px 14px",fontSize:13,color:active?T.accentText:T.t2,cursor:"pointer",background:active?T.accentBg:"transparent",borderLeft:active?`2px solid ${T.accent}`:"2px solid transparent",fontWeight:active?500:400,transition:"background .1s"}}>
         <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{flexShrink:0,opacity:active?1:.55}}>
           {iconPaths}
         </svg>
@@ -216,7 +216,7 @@ function Sidebar({user,tab,onTab,pendingCount,T}) {
   return (
     <div style={{width:200,flexShrink:0,background:T.sidebarBg,borderRight:`0.5px solid ${T.border}`,display:"flex",flexDirection:"column",minHeight:"100vh",position:"sticky",top:0}}>
       <div style={{padding:"14px 16px",borderBottom:`0.5px solid ${T.border}`,display:"flex",alignItems:"center",gap:10}}>
-        <div style={{width:30,height:30,borderRadius:8,background:OL[600],display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+        <div style={{width:30,height:30,borderRadius:8,background:T.accent,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" strokeWidth="2">
             <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
             <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
@@ -292,7 +292,7 @@ function Dashboard({user,orders,T}) {
         <div><div style={{fontSize:15,fontWeight:500,color:T.t1,marginBottom:2}}>Buenos días, {user.name.split(" ")[0]}</div><div style={{fontSize:12,color:T.t3}}>Resumen de tus pedidos</div></div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:10}}>
           <MetCard label="Pedidos activos"     val={activos.length}    sub={urgentes.length>0?`${urgentes.length} con incidencia`:undefined} color={activos.length?T.t1:T.t3}/>
-          <MetCard label="En tránsito"         val={enTransito.length} sub="Pendientes de recibir" color={enTransito.length?OL[600]:T.t3}/>
+          <MetCard label="En tránsito"         val={enTransito.length} sub="Pendientes de recibir" color={enTransito.length?T.accent:T.t3}/>
           <MetCard label="Entregados este mes" val={entregados.length} sub="Este mes"               color={entregados.length?"#27500A":T.t3}/>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"minmax(0,1fr) minmax(0,1fr)",gap:14}}>
@@ -302,7 +302,7 @@ function Dashboard({user,orders,T}) {
               {urgentes.length>0
                 ? urgentes.slice(0,2).map(o=><AlertCard key={o.id} bg="#FCEBEB" border="#F09595" iconColor="#791F1F" title={`${o.id} en incidencia`} sub={o.producto} icon={<><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r=".6" fill="#791F1F"/></>}/>)
                 : null}
-              {enTransito.slice(0,2).map(o=><AlertCard key={o.id} bg={OL[50]} border={OL[200]} iconColor={OL[800]} title={`${o.id} en tránsito`} sub={`${o.producto}${o.fechaEstimada?" — est. "+o.fechaEstimada:""}`} icon={<><path d="M8 2v8M4 7l4 4 4-4"/><path d="M2 13h12"/></>}/>)}
+              {enTransito.slice(0,2).map(o=><AlertCard key={o.id} bg={T.accentBg} border={T.accentBorder} iconColor={T.accentText} title={`${o.id} en tránsito`} sub={`${o.producto}${o.fechaEstimada?" — est. "+o.fechaEstimada:""}`} icon={<><path d="M8 2v8M4 7l4 4 4-4"/><path d="M2 13h12"/></>}/>)}
               {activos.filter(o=>!o.fechaEstimada).slice(0,1).map(o=><AlertCard key={o.id} bg="#FAEEDA" border="#FAC775" iconColor="#633806" title={`${o.id} sin fecha estimada`} sub={o.producto} icon={<><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M5 3V1M11 3V1M2 7h12"/></>}/>)}
               {urgentes.length===0&&enTransito.length===0&&activos.filter(o=>!o.fechaEstimada).length===0&&<div style={{fontSize:12,color:T.t3,padding:"8px 0"}}>Sin alertas activas</div>}
             </div>
@@ -316,7 +316,7 @@ function Dashboard({user,orders,T}) {
               <SL>Gasto personal del mes</SL>
               <Card><div style={{padding:"12px 14px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}><span style={{color:T.t2}}>Comprometido</span><span style={{fontWeight:500,color:T.t1}}>€{gasto.toLocaleString("es-ES")}</span></div>
-                <div style={{height:6,borderRadius:3,background:T.surf2,overflow:"hidden"}}><div style={{width:`${Math.min((gasto/limite)*100,100).toFixed(0)}%`,height:"100%",borderRadius:3,background:OL[600]}}/></div>
+                <div style={{height:6,borderRadius:3,background:T.surf2,overflow:"hidden"}}><div style={{width:`${Math.min((gasto/limite)*100,100).toFixed(0)}%`,height:"100%",borderRadius:3,background:T.accent}}/></div>
                 <div style={{fontSize:10,color:T.t3,marginTop:4}}>{((gasto/limite)*100).toFixed(0)}% del límite (€{limite.toLocaleString("es-ES")})</div>
               </div></Card>
             </div>
@@ -337,7 +337,7 @@ function Dashboard({user,orders,T}) {
         <div><div style={{fontSize:15,fontWeight:500,color:T.t1,marginBottom:2}}>Panel de responsable</div><div style={{fontSize:12,color:T.t3}}>Aprobaciones y estado del equipo</div></div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:10}}>
           <MetCard label="Pend. aprobación" val={pendAprov.length} sub={`${pendAprov.filter(o=>!o.fechaEstimada).length} sin fecha`} color={pendAprov.length?"#633806":T.t3}/>
-          <MetCard label="En curso"         val={enCurso.length}   sub="Preparación o tránsito" color={OL[600]}/>
+          <MetCard label="En curso"         val={enCurso.length}   sub="Preparación o tránsito" color={T.accent}/>
           <MetCard label="Gasto del mes"    val={`€${gastoTotal.toLocaleString("es-ES",{maximumFractionDigits:0})}`} sub={`${((gastoTotal/limite)*100).toFixed(0)}% del ppto.`}/>
           <MetCard label="Cancelados"       val={orders.filter(o=>o.estado==="Cancelado").length} sub="Este mes" color="#791F1F"/>
         </div>
@@ -354,20 +354,20 @@ function Dashboard({user,orders,T}) {
                         {!o.fechaEstimada&&<span style={{background:"#FAEEDA",color:"#633806",fontSize:10,fontWeight:500,padding:"2px 7px",borderRadius:20}}>Sin fecha</span>}
                       </div>
                       <div style={{display:"flex",gap:6}}>
-                        <span style={{flex:1,fontSize:11,padding:"5px 0",borderRadius:7,border:`0.5px solid ${OL[200]}`,background:OL[50],color:OL[800],cursor:"pointer",fontWeight:500,textAlign:"center"}}>Aprobar</span>
+                        <span style={{flex:1,fontSize:11,padding:"5px 0",borderRadius:7,border:`0.5px solid ${T.accentBorder}`,background:T.accentBg,color:T.accentText,cursor:"pointer",fontWeight:500,textAlign:"center"}}>Aprobar</span>
                         <span style={{flex:1,fontSize:11,padding:"5px 0",borderRadius:7,border:"0.5px solid #F09595",background:"#FCEBEB",color:"#791F1F",cursor:"pointer",textAlign:"center"}}>Rechazar</span>
                       </div>
                     </div>
                   ))}
-                  {pendAprov.length>3&&<div style={{fontSize:12,color:OL[600],cursor:"pointer",paddingTop:2}}>Ver {pendAprov.length-3} más →</div>}
+                  {pendAprov.length>3&&<div style={{fontSize:12,color:T.accent,cursor:"pointer",paddingTop:2}}>Ver {pendAprov.length-3} más →</div>}
                 </div>}
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
             <div>
               <SL>Presupuesto del mes</SL>
               <Card><div style={{padding:"12px 14px"}}>
-                <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}><span style={{color:T.t2}}>€{gastoTotal.toLocaleString("es-ES",{maximumFractionDigits:0})} de €{limite.toLocaleString("es-ES")}</span><span style={{fontWeight:500,color:gastoTotal/limite>.8?"#791F1F":OL[800]}}>{((gastoTotal/limite)*100).toFixed(0)}%</span></div>
-                <div style={{height:6,borderRadius:3,background:T.surf2,overflow:"hidden",marginBottom:12}}><div style={{width:`${Math.min((gastoTotal/limite)*100,100).toFixed(0)}%`,height:"100%",borderRadius:3,background:OL[600]}}/></div>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}><span style={{color:T.t2}}>€{gastoTotal.toLocaleString("es-ES",{maximumFractionDigits:0})} de €{limite.toLocaleString("es-ES")}</span><span style={{fontWeight:500,color:gastoTotal/limite>.8?"#791F1F":T.accentText}}>{((gastoTotal/limite)*100).toFixed(0)}%</span></div>
+                <div style={{height:6,borderRadius:3,background:T.surf2,overflow:"hidden",marginBottom:12}}><div style={{width:`${Math.min((gastoTotal/limite)*100,100).toFixed(0)}%`,height:"100%",borderRadius:3,background:T.accent}}/></div>
                 {[["Infraestructura",gastoTotal*0.57],["Periféricos",gastoTotal*0.20],["Consumibles",gastoTotal*0.12]].map(([k,v])=>(
                   <div key={k} style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}><span style={{color:T.t2}}>{k}</span><span style={{fontWeight:500,color:T.t1}}>€{v.toLocaleString("es-ES",{maximumFractionDigits:0})}</span></div>
                 ))}
@@ -379,7 +379,7 @@ function Dashboard({user,orders,T}) {
                 <div key={o.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 12px",borderBottom:i<3?`0.5px solid ${T.border}`:"none"}}>
                   <Avatar name={o.solicitante} role="empleado" size={22}/>
                   <div style={{flex:1,fontSize:11,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.solicitante} — {o.producto}</div>
-                  <Pill estado={o.estado}/>
+                  <Pill estado={o.estado} dark={T.dark}/>
                 </div>
               ))}</Card>
             </div>
@@ -401,9 +401,9 @@ function Dashboard({user,orders,T}) {
       <div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:16}}>
         <div><div style={{fontSize:15,fontWeight:500,color:T.t1,marginBottom:2}}>Panel del proveedor</div><div style={{fontSize:12,color:T.t3}}>Pedidos pendientes y seguimiento</div></div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:10}}>
-          <MetCard label="Nuevos por atender"  val={nuevos.length}      sub="Sin procesar"                                   color={nuevos.length?OL[800]:T.t3}/>
+          <MetCard label="Nuevos por atender"  val={nuevos.length}      sub="Sin procesar"                                   color={nuevos.length?T.accentText:T.t3}/>
           <MetCard label="En preparación"      val={preparacion.length} sub="En proceso"                                      color={preparacion.length?"#633806":T.t3}/>
-          <MetCard label="En tránsito"         val={transito.length}    sub={sinTracking.length>0?`${sinTracking.length} sin tracking`:"Todos con tracking"} color={transito.length?OL[600]:T.t3}/>
+          <MetCard label="En tránsito"         val={transito.length}    sub={sinTracking.length>0?`${sinTracking.length} sin tracking`:"Todos con tracking"} color={transito.length?T.accent:T.t3}/>
           <MetCard label="Facturas pendientes" val={factPend.length}    sub={`€${importeFact.toLocaleString("es-ES",{maximumFractionDigits:0})}`} color={factPend.length?"#791F1F":T.t3}/>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"minmax(0,1fr) minmax(0,1fr)",gap:14}}>
@@ -413,16 +413,16 @@ function Dashboard({user,orders,T}) {
               ? <div style={{fontSize:12,color:T.t3,padding:"8px 0"}}>Sin pedidos nuevos</div>
               : <div style={{display:"flex",flexDirection:"column",gap:8}}>
                   {nuevos.slice(0,3).map(o=>(
-                    <div key={o.id} style={{background:T.surface,border:`1.5px solid ${OL[200]}`,borderRadius:10,padding:"10px 12px",position:"relative",overflow:"hidden"}}>
-                      <div style={{position:"absolute",left:0,top:0,bottom:0,width:4,background:OL[600]}}/>
+                    <div key={o.id} style={{background:T.surface,border:`1.5px solid ${T.accentBorder}`,borderRadius:10,padding:"10px 12px",position:"relative",overflow:"hidden"}}>
+                      <div style={{position:"absolute",left:0,top:0,bottom:0,width:4,background:T.accent}}/>
                       <div style={{paddingLeft:6}}>
                         <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:12,fontWeight:500,color:T.t1}}>{o.producto}</span></div>
                         <div style={{fontSize:11,color:T.t3}}>{o.id} · {o.solicitante}{o.fechaEstimada?` · Est. ${o.fechaEstimada}`:""}</div>
-                        <span style={{display:"inline-block",marginTop:8,fontSize:11,padding:"4px 12px",borderRadius:7,border:`0.5px solid ${OL[200]}`,background:OL[50],color:OL[800],cursor:"pointer",fontWeight:500}}>→ Poner en preparación</span>
+                        <span style={{display:"inline-block",marginTop:8,fontSize:11,padding:"4px 12px",borderRadius:7,border:`0.5px solid ${T.accentBorder}`,background:T.accentBg,color:T.accentText,cursor:"pointer",fontWeight:500}}>→ Poner en preparación</span>
                       </div>
                     </div>
                   ))}
-                  {nuevos.length>3&&<div style={{fontSize:12,color:OL[600],cursor:"pointer",paddingTop:2}}>Ver {nuevos.length-3} más →</div>}
+                  {nuevos.length>3&&<div style={{fontSize:12,color:T.accent,cursor:"pointer",paddingTop:2}}>Ver {nuevos.length-3} más →</div>}
                 </div>}
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -431,7 +431,7 @@ function Dashboard({user,orders,T}) {
               <Card>{transito.length>0?transito.slice(0,3).map((o,i)=>(
                 <div key={o.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderBottom:i<Math.min(transito.length,3)-1?`0.5px solid ${T.border}`:"none"}}>
                   <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,fontWeight:500,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.producto}</div><div style={{fontSize:10,color:T.t3,fontFamily:"monospace"}}>{o.id}</div></div>
-                  {o.tracking?<span style={{fontSize:11,color:OL[600],fontWeight:500}}>{o.tracking}</span>:<span style={{fontSize:11,color:"#791F1F",fontWeight:500}}>Sin tracking</span>}
+                  {o.tracking?<span style={{fontSize:11,color:T.accent,fontWeight:500}}>{o.tracking}</span>:<span style={{fontSize:11,color:"#791F1F",fontWeight:500}}>Sin tracking</span>}
                 </div>
               )):<div style={{padding:"12px",fontSize:12,color:T.t3}}>Sin pedidos en tránsito</div>}</Card>
             </div>
@@ -440,7 +440,7 @@ function Dashboard({user,orders,T}) {
               <Card>{factPend.length>0?factPend.slice(0,3).map((o,i)=>(
                 <div key={o.id} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderBottom:i<Math.min(factPend.length,3)-1?`0.5px solid ${T.border}`:"none"}}>
                   <div style={{flex:1}}><div style={{fontSize:12,fontWeight:500,color:T.t1}}>{o.id} · €{((o.precio||0)*(o.cantidad||1)).toLocaleString("es-ES")}</div><div style={{fontSize:10,color:T.t3}}>Albarán enviado</div></div>
-                  <span style={{fontSize:11,padding:"3px 10px",borderRadius:7,border:`0.5px solid ${OL[200]}`,background:OL[50],color:OL[800],cursor:"pointer",fontWeight:500}}>Facturar</span>
+                  <span style={{fontSize:11,padding:"3px 10px",borderRadius:7,border:`0.5px solid ${T.accentBorder}`,background:T.accentBg,color:T.accentText,cursor:"pointer",fontWeight:500}}>Facturar</span>
                 </div>
               )):<div style={{padding:"12px",fontSize:12,color:T.t3}}>Sin facturas pendientes</div>}</Card>
             </div>
@@ -473,7 +473,7 @@ function Dashboard({user,orders,T}) {
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {incids.length>0&&<AlertCard bg="#FCEBEB" border="#F09595" iconColor="#791F1F" title={`${incids.length} incidencia${incids.length>1?"s":""} sin resolver`} sub={incids.map(o=>o.id).join(", ")} icon={<><path d="M8 2L1 13h14L8 2z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="#791F1F"/></>}/>}
             {gastoTot/limite>.65&&<AlertCard bg="#FAEEDA" border="#FAC775" iconColor="#633806" title={`Presupuesto al ${((gastoTot/limite)*100).toFixed(0)}%`} sub={`Quedan €${(limite-gastoTot).toLocaleString("es-ES",{maximumFractionDigits:0})}`} icon={<><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r=".6" fill="#633806"/></>}/>}
-            {pendAprov.length>0&&<AlertCard bg={OL[50]} border={OL[200]} iconColor={OL[800]} title={`${pendAprov.length} pedido${pendAprov.length>1?"s":""} esperan aprobación`} sub={`Más antiguo: ${pendAprov[pendAprov.length-1]?.fechaSolicitud||"—"}`} icon={<><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="11"/><line x1="5" y1="8" x2="11" y2="8"/></>}/>}
+            {pendAprov.length>0&&<AlertCard bg={T.accentBg} border={T.accentBorder} iconColor={T.accentText} title={`${pendAprov.length} pedido${pendAprov.length>1?"s":""} esperan aprobación`} sub={`Más antiguo: ${pendAprov[pendAprov.length-1]?.fechaSolicitud||"—"}`} icon={<><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="11"/><line x1="5" y1="8" x2="11" y2="8"/></>}/>}
             {orders.filter(o=>o.estado==="Enviado / en tránsito"&&!o.tracking).length>0&&<AlertCard bg="#FAEEDA" border="#FAC775" iconColor="#633806" title="Pedidos en tránsito sin tracking" sub={orders.filter(o=>o.estado==="Enviado / en tránsito"&&!o.tracking).map(o=>o.id).join(", ")} icon={<><path d="M8 2v8M4 7l4 4 4-4"/><path d="M2 13h12"/></>}/>}
             {incids.length===0&&gastoTot/limite<=.65&&pendAprov.length===0&&<div style={{fontSize:12,color:T.t3,padding:"8px 0"}}>Sin alertas activas</div>}
           </div>
@@ -635,7 +635,7 @@ function DetailPanel({order:o,user,T,onClose,onUpdate,onDelete,onChangeEstado}) 
         <Field label="Categoría" k="categoria" opts={CATEGORIAS}/>
         <Field label="Cantidad" k="cantidad" type="number"/>
         <Field label="Precio unitario (€)" k="precio" type="number"/>
-        {form.precio>0&&<div style={{marginBottom:14,background:OL[50],borderRadius:8,padding:"10px 14px"}}><div style={{fontSize:11,color:OL[800],marginBottom:2,fontWeight:500}}>Importe total</div><div style={{fontSize:16,fontWeight:500,color:OL[800]}}>€{(form.precio*form.cantidad).toLocaleString("es-ES")}</div></div>}
+        {form.precio>0&&<div style={{marginBottom:14,background:T.accentBg,borderRadius:8,padding:"10px 14px"}}><div style={{fontSize:11,color:T.accentText,marginBottom:2,fontWeight:500}}>Importe total</div><div style={{fontSize:16,fontWeight:500,color:T.accentText}}>€{(form.precio*form.cantidad).toLocaleString("es-ES")}</div></div>}
         <Field label="Solicitante" k="solicitante"/>
         <Field label="Fecha estimada" k="fechaEstimada" type="date"/>
         <Field label="Nº seguimiento / albarán" k="tracking"/>
@@ -679,7 +679,7 @@ function NewOrderModal({user,T,onClose,onCreate}) {
         </div>
         <div style={{marginBottom:14}}><FL>Fecha estimada</FL><input type="date" value={form.fechaEstimada} onChange={e=>f("fechaEstimada",e.target.value)} style={inp}/></div>
         <div style={{marginBottom:20}}><FL>Notas</FL><textarea value={form.notas} onChange={e=>f("notas",e.target.value)} rows={3} style={{...inp,resize:"vertical",height:"auto"}}/></div>
-        {form.precio>0&&form.cantidad>0&&<div style={{background:OL[50],borderRadius:8,padding:"10px 14px",marginBottom:16}}><span style={{fontSize:12,color:OL[800]}}>Importe total: </span><span style={{fontSize:14,fontWeight:500,color:OL[800]}}>€{(form.precio*form.cantidad).toLocaleString("es-ES")}</span></div>}
+        {form.precio>0&&form.cantidad>0&&<div style={{background:T.accentBg,borderRadius:8,padding:"10px 14px",marginBottom:16}}><span style={{fontSize:12,color:T.accentText}}>Importe total: </span><span style={{fontSize:14,fontWeight:500,color:T.accentText}}>€{(form.precio*form.cantidad).toLocaleString("es-ES")}</span></div>}
         <div style={{display:"flex",gap:8}}>
           <button disabled={!valid||saving} onClick={handle} style={{...mkBtnPrimary(T),opacity:valid&&!saving?1:.5,cursor:valid&&!saving?"pointer":"not-allowed"}}>{saving?"Guardando…":"Crear pedido"}</button>
           <button onClick={onClose} style={mkBtnGhost(T)}>Cancelar</button>
@@ -948,7 +948,7 @@ export default function App() {
   if(!user) return (
     <div style={{minHeight:"100vh",background:T.bg,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Inter',system-ui,sans-serif",padding:"1.5rem"}}>
       <div style={{display:"flex",width:"100%",maxWidth:820,borderRadius:16,overflow:"hidden",border:`0.5px solid ${T.borderM}`,minHeight:520}}>
-        <div style={{width:240,flexShrink:0,background:OL[600],padding:"2rem 1.5rem",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
+        <div style={{width:240,flexShrink:0,background:T.accent,padding:"2rem 1.5rem",display:"flex",flexDirection:"column",justifyContent:"space-between"}}>
           <div>
             <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:"1.5rem"}}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
@@ -967,8 +967,8 @@ export default function App() {
         <div style={{flex:1,background:T.surface,padding:"2.5rem 2rem",display:"flex",flexDirection:"column",justifyContent:"center"}}>
           <div style={{marginBottom:28}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <div style={{display:"inline-flex",alignItems:"center",gap:5,background:OL[50],color:OL[800],fontSize:11,fontWeight:500,padding:"3px 10px",borderRadius:20}}>
-                <div style={{width:6,height:6,borderRadius:"50%",background:OL[600]}}/>
+              <div style={{display:"inline-flex",alignItems:"center",gap:5,background:T.accentBg,color:T.accentText,fontSize:11,fontWeight:500,padding:"3px 10px",borderRadius:20}}>
+                <div style={{width:6,height:6,borderRadius:"50%",background:T.accent}}/>
                 Portal activo
               </div>
               <DarkToggle dark={dark} onToggle={()=>setDark(d=>!d)} T={T}/>
@@ -1056,9 +1056,9 @@ export default function App() {
               const isAsc=histSort===sortKey;
               const toggle=()=>setHistSort(isAsc&&sortKeyAlt?sortKeyAlt:sortKey);
               return (
-                <div onClick={toggle} style={{minWidth,fontSize:11,fontWeight:500,color:isActive?OL[600]:T.t3,cursor:"pointer",display:"flex",alignItems:"center",gap:3,userSelect:"none",flexShrink:0}}>
+                <div onClick={toggle} style={{minWidth,fontSize:11,fontWeight:500,color:isActive?T.accent:T.t3,cursor:"pointer",display:"flex",alignItems:"center",gap:3,userSelect:"none",flexShrink:0}}>
                   {label}
-                  <svg width="10" height="10" viewBox="0 0 10 14" fill="none" stroke={isActive?OL[600]:T.t3} strokeWidth="1.5">
+                  <svg width="10" height="10" viewBox="0 0 10 14" fill="none" stroke={isActive?T.accent:T.t3} strokeWidth="1.5">
                     {isAsc
                       ? <><path d="M5 1v12M1 9l4 4 4-4" opacity="1"/><path d="M1 5l4-4 4 4" opacity="0.3"/></>
                       : <><path d="M5 1v12M1 5l4-4 4 4" opacity="1"/><path d="M1 9l4 4 4-4" opacity="0.3"/></>}
@@ -1090,7 +1090,7 @@ export default function App() {
 
                 {/* Exportar */}
                 <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
-                  {[{label:"↓ XLSX (vista)",fn:()=>exportXLSX(visibleHist,"historial-filtrado"),bg:"#EAF3DE",color:"#27500A",border:"#C0DD97"},{label:"↓ PDF (vista)",fn:()=>exportPDF(visibleHist,"historial-filtrado"),bg:"#FCEBEB",color:"#791F1F",border:"#F09595"},{label:"↓ XLSX (todo)",fn:()=>exportXLSX(historial,"historial-completo"),bg:OL[50],color:OL[800],border:OL[200]},{label:"↓ PDF (todo)",fn:()=>exportPDF(historial,"historial-completo"),bg:"#FAEEDA",color:"#633806",border:"#FAC775"}].map(b=>(
+                  {[{label:"↓ XLSX (vista)",fn:()=>exportXLSX(visibleHist,"historial-filtrado"),bg:"#EAF3DE",color:"#27500A",border:"#C0DD97"},{label:"↓ PDF (vista)",fn:()=>exportPDF(visibleHist,"historial-filtrado"),bg:"#FCEBEB",color:"#791F1F",border:"#F09595"},{label:"↓ XLSX (todo)",fn:()=>exportXLSX(historial,"historial-completo"),bg:T.accentBg,color:T.accentText,border:T.accentBorder},{label:"↓ PDF (todo)",fn:()=>exportPDF(historial,"historial-completo"),bg:"#FAEEDA",color:"#633806",border:"#FAC775"}].map(b=>(
                     <button key={b.label} onClick={b.fn} style={{fontSize:12,padding:"5px 12px",borderRadius:8,border:`0.5px solid ${b.border}`,background:b.bg,color:b.color,cursor:"pointer",fontWeight:500}}>{b.label}</button>
                   ))}
                 </div>
