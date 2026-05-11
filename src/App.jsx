@@ -641,7 +641,7 @@ function DetailPanel({order:o,user,T,onClose,onUpdate,onDelete,onChangeEstado}) 
           <div>
             <div style={{fontSize:11,color:T.t3,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.04em",fontWeight:500}}>Cambiar estado</div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-              {next.map(s=>{const c=ECOLOR[s];return <button key={s} onClick={()=>{onChangeEstado(s);setForm(f=>({...f,estado:s}));}} style={{fontSize:12,padding:"5px 12px",borderRadius:20,border:`1px solid ${c.btn}`,background:c.bg,color:c.text,cursor:"pointer",fontWeight:500}}>→ {s}</button>;})}
+              {next.map(s=>{const EC=getECOLOR(T.dark);const c=EC[s]||{bg:T.surf2,text:T.t1,btn:T.border};return <button key={s} onClick={()=>{onChangeEstado(s);setForm(f=>({...f,estado:s}));}} style={{fontSize:12,padding:"5px 12px",borderRadius:20,border:`1px solid ${c.btn}`,background:c.bg,color:c.text,cursor:"pointer",fontWeight:500}}>→ {s}</button>;})}
             </div>
           </div>
         )}
@@ -1124,8 +1124,9 @@ export default function App() {
                   : <div style={{display:"flex",flexDirection:"column",gap:5}}>
                       {visibleHist.map((h,i)=>{
                         const r=ROLES[h.usuario_role]||ROLES.empleado;
-                        const cOld=ECOLOR[h.estado_anterior]||{bg:"#F1EFE8",text:"#444441"};
-                        const cNew=ECOLOR[h.estado_nuevo]||{bg:"#F1EFE8",text:"#444441"};
+                        const _EC=getECOLOR(T.dark);
+                        const cOld=_EC[h.estado_anterior]||{bg:"#F1EFE8",text:"#444441"};
+                        const cNew=_EC[h.estado_nuevo]||{bg:"#F1EFE8",text:"#444441"};
                         return (
                           <div key={h.id} style={{background:i%2===0?T.surface:T.surf2,border:`0.5px solid ${T.border}`,borderRadius:10,padding:"10px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"nowrap",overflowX:"auto"}}>
                             <div style={{fontSize:11,color:T.t3,minWidth:116,flexShrink:0,fontFamily:"monospace"}}>{fmtDateTime(h.created_at)}</div>
