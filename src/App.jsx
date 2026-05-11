@@ -673,6 +673,115 @@ function DetailPanel({order:o,user,T,onClose,onUpdate,onDelete,onChangeEstado}) 
   );
 }
 
+/* ─── DatePicker ─────────────────────────────────────────────────────────── */
+function DatePicker({value,onChange,T}) {
+  const [open,setOpen]=useState(false);
+  const today=new Date();
+  const parsed=value?new Date(value+"T00:00:00"):null;
+  const [viewYear,setViewYear]=useState((parsed||today).getFullYear());
+  const [viewMonth,setViewMonth]=useState((parsed||today).getMonth());
+
+  const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const DIAS=["L","M","X","J","V","S","D"];
+
+  const firstDay=(new Date(viewYear,viewMonth,1).getDay()+6)%7; // lunes=0
+  const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
+  const cells=[];
+  for(let i=0;i<firstDay;i++) cells.push(null);
+  for(let d=1;d<=daysInMonth;d++) cells.push(d);
+
+  const select=(d)=>{
+    const mm=String(viewMonth+1).padStart(2,"0");
+    const dd=String(d).padStart(2,"0");
+    onChange(`${viewYear}-${mm}-${dd}`);
+    setOpen(false);
+  };
+  const prevMonth=()=>{if(viewMonth===0){setViewMonth(11);setViewYear(y=>y-1);}else setViewMonth(m=>m-1);};
+  const nextMonth=()=>{if(viewMonth===11){setViewMonth(0);setViewYear(y=>y+1);}else setViewMonth(m=>m+1);};
+
+  const displayVal=parsed
+    ? `${String(parsed.getDate()).padStart(2,"0")}/${String(parsed.getMonth()+1).padStart(2,"0")}/${parsed.getFullYear()}`
+    : "";
+
+  const isSelected=(d)=>{
+    if(!parsed||!d) return false;
+    return parsed.getFullYear()===viewYear&&parsed.getMonth()===viewMonth&&parsed.getDate()===d;
+  };
+  const isToday=(d)=>d&&today.getFullYear()===viewYear&&today.getMonth()===viewMonth&&today.getDate()===d;
+
+  return (
+    <div style={{position:"relative"}}>
+      {/* Input visible */}
+      <div onClick={()=>setOpen(o=>!o)}
+        style={{...mkInp(T),display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",userSelect:"none",boxSizing:"border-box"}}>
+        <span style={{color:displayVal?T.t1:T.t3}}>{displayVal||"Seleccionar fecha…"}</span>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          {value&&<span onClick={e=>{e.stopPropagation();onChange("");}} style={{fontSize:13,color:T.t3,lineHeight:1,cursor:"pointer"}}>✕</span>}
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke={T.t3} strokeWidth="1.5">
+            <rect x="1" y="2" width="14" height="13" rx="2"/><path d="M5 1v2M11 1v2M1 6h14"/>
+          </svg>
+        </div>
+      </div>
+
+      {/* Popover calendario */}
+      {open&&(
+        <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:999,background:T.surface,border:`0.5px solid ${T.borderM}`,borderRadius:12,padding:"14px",width:268,boxShadow:"0 8px 32px rgba(0,0,0,0.18)"}}>
+
+          {/* Cabecera navegación */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <button onClick={prevMonth} style={{width:28,height:28,borderRadius:8,border:`0.5px solid ${T.border}`,background:"none",cursor:"pointer",color:T.t2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M8 2L4 6l4 4"/></svg>
+            </button>
+            <span style={{fontSize:13,fontWeight:500,color:T.t1}}>{MESES[viewMonth]} {viewYear}</span>
+            <button onClick={nextMonth} style={{width:28,height:28,borderRadius:8,border:`0.5px solid ${T.border}`,background:"none",cursor:"pointer",color:T.t2,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 2l4 4-4 4"/></svg>
+            </button>
+          </div>
+
+          {/* Días de la semana */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:6}}>
+            {DIAS.map(d=><div key={d} style={{textAlign:"center",fontSize:10,fontWeight:500,color:T.t3,padding:"4px 0"}}>{d}</div>)}
+          </div>
+
+          {/* Celdas del mes */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
+            {cells.map((d,i)=>{
+              const sel=isSelected(d);
+              const tod=isToday(d);
+              return (
+                <div key={i} onClick={()=>d&&select(d)}
+                  style={{
+                    height:32,display:"flex",alignItems:"center",justifyContent:"center",
+                    borderRadius:8,fontSize:12,cursor:d?"pointer":"default",
+                    fontWeight:sel||tod?600:400,
+                    background:sel?T.accent:"none",
+                    color:sel?"#fff":tod?T.accent:d?T.t1:T.t3,
+                    border:tod&&!sel?`1.5px solid ${T.accentBorder}`:"1.5px solid transparent",
+                    transition:"background .1s",
+                  }}
+                  onMouseEnter={e=>{if(d&&!sel)e.currentTarget.style.background=T.surf2;}}
+                  onMouseLeave={e=>{if(d&&!sel)e.currentTarget.style.background="none";}}>
+                  {d||""}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Footer: hoy */}
+          <div style={{marginTop:10,paddingTop:10,borderTop:`0.5px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <button onClick={()=>{const d=new Date();select(d.getDate());setViewYear(d.getFullYear());setViewMonth(d.getMonth());}}
+              style={{fontSize:11,color:T.accent,background:"none",border:"none",cursor:"pointer",fontWeight:500}}>Hoy</button>
+            <button onClick={()=>setOpen(false)} style={{fontSize:11,color:T.t3,background:"none",border:"none",cursor:"pointer"}}>Cerrar</button>
+          </div>
+        </div>
+      )}
+
+      {/* Overlay para cerrar al clicar fuera */}
+      {open&&<div style={{position:"fixed",inset:0,zIndex:998}} onClick={()=>setOpen(false)}/>}
+    </div>
+  );
+}
+
 /* ─── NewOrderModal ──────────────────────────────────────────────────────── */
 function NewOrderModal({user,T,onClose,onCreate}) {
   const [form,setForm]=useState({producto:"",categoria:"Ordenador",cantidad:1,precio:"",fechaEstimada:"",notas:""});
@@ -692,7 +801,7 @@ function NewOrderModal({user,T,onClose,onCreate}) {
           <div><FL>Cantidad</FL><input type="number" min={1} value={form.cantidad} onChange={e=>f("cantidad",+e.target.value)} style={inp}/></div>
           <div><FL>Precio (€) · opcional</FL><input type="number" min={0} value={form.precio} placeholder="—" onChange={e=>f("precio",+e.target.value)} style={inp}/></div>
         </div>
-        <div style={{marginBottom:14}}><FL>Fecha estimada</FL><input type="date" value={form.fechaEstimada} onChange={e=>f("fechaEstimada",e.target.value)} style={inp}/></div>
+        <div style={{marginBottom:14}}><FL>Fecha estimada</FL><DatePicker value={form.fechaEstimada} onChange={v=>f("fechaEstimada",v)} T={T}/></div>
         <div style={{marginBottom:20}}><FL>Notas</FL><textarea value={form.notas} onChange={e=>f("notas",e.target.value)} rows={3} style={{...inp,resize:"vertical",height:"auto"}}/></div>
         {form.precio>0&&form.cantidad>0&&<div style={{background:T.accentBg,borderRadius:8,padding:"10px 14px",marginBottom:16}}><span style={{fontSize:12,color:T.accentText}}>Importe total: </span><span style={{fontSize:14,fontWeight:500,color:T.accentText}}>€{(form.precio*form.cantidad).toLocaleString("es-ES")}</span></div>}
         <div style={{display:"flex",gap:8}}>
