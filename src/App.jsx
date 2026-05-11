@@ -6,15 +6,70 @@ import "jspdf-autotable";
 
 /* ─── Paletas por empresa ─────────────────────────────────────────────────── */
 const EMPRESAS = {
-  Ubesol:  { label:"Ubesol",  50:"#F2F4EE", 100:"#DDE3D0", 200:"#C3CEAF", 400:"#8FA870", 600:"#5E7A40", 800:"#3A5226", 900:"#243318", darkBg:"#13140f", darkSurf:"#1a1d14", darkSurf2:"#22261a", darkSidebar:"#161910" },
-  Maverick:{ label:"Maverick",50:"#E6F1FB", 100:"#B5D4F4", 200:"#85B7EB", 400:"#378ADD", 600:"#185FA5", 800:"#0C447C", 900:"#042C53", darkBg:"#0a0f18", darkSurf:"#101828", darkSurf2:"#162032", darkSidebar:"#0c1420" },
-  Izzon:   { label:"Izzon",   50:"#FAEEDA", 100:"#FAC775", 200:"#EF9F27", 400:"#BA7517", 600:"#854F0B", 800:"#633806", 900:"#412402", darkBg:"#130e06", darkSurf:"#1e160a", darkSurf2:"#271d0e", darkSidebar:"#18110a" },
+  Ubesol:  {
+    label:"Ubesol",
+    50:"#F2F4EE", 100:"#DDE3D0", 200:"#C3CEAF", 400:"#8FA870", 600:"#5E7A40", 800:"#3A5226", 900:"#243318",
+    darkBg:"#0d0f0b", darkSurf:"#141710", darkSurf2:"#1c2016", darkSidebar:"#10130e",
+    // neón dark: texto brillante sobre fondo muy oscuro
+    neon600:"#7DCC4A", neon400:"#A8E870", neon200:"#3a4a28", neon50:"#1a2212",
+  },
+  Maverick:{
+    label:"Maverick",
+    50:"#E6F1FB", 100:"#B5D4F4", 200:"#85B7EB", 400:"#378ADD", 600:"#185FA5", 800:"#0C447C", 900:"#042C53",
+    darkBg:"#080d14", darkSurf:"#0d1520", darkSurf2:"#121d2c", darkSidebar:"#0a1019",
+    neon600:"#4DB8FF", neon400:"#82CFFF", neon200:"#0d2a45", neon50:"#071523",
+  },
+  Izzon:   {
+    label:"Izzon",
+    50:"#FAEEDA", 100:"#FAC775", 200:"#EF9F27", 400:"#BA7517", 600:"#854F0B", 800:"#633806", 900:"#412402",
+    darkBg:"#0f0b04", darkSurf:"#1a1308", darkSurf2:"#22190b", darkSidebar:"#150f05",
+    neon600:"#FFB830", neon400:"#FFD070", neon200:"#3d2a05", neon50:"#1e1403",
+  },
 };
 const EMPRESAS_LISTA = ["Ubesol","Maverick","Izzon"];
 
 // Paleta activa: se actualiza al iniciar sesión (default Ubesol)
 let OL = {...EMPRESAS.Ubesol};
 const setEmpresaPaleta = (empresa) => { OL = {...(EMPRESAS[empresa]||EMPRESAS.Ubesol)}; };
+
+/* ─── Colores de estado (light vs dark/neón) ─────────────────────────────── */
+const ECOLOR_LIGHT = {
+  "Nuevo pedido":             { bg:"#F2F4EE", text:"#3A5226", btn:"#C3CEAF" },
+  "En preparación":           { bg:"#FAEEDA", text:"#633806", btn:"#FAC775" },
+  "Enviado / en tránsito":    { bg:"#DDE3D0", text:"#3A5226", btn:"#8FA870" },
+  "Entregado":                { bg:"#EAF3DE", text:"#27500A", btn:"#97C459" },
+  "Albarán enviado":          { bg:"#E1F5EE", text:"#085041", btn:"#9FE1CB" },
+  "Facturado":                { bg:"#EEEDFE", text:"#534AB7", btn:"#7F77DD" },
+  "Pendiente de pago":        { bg:"#FAECE7", text:"#712B13", btn:"#F0997B" },
+  "Pagado":                   { bg:"#EAF3DE", text:"#3B6D11", btn:"#C0DD97" },
+  "En garantía / incidencia": { bg:"#FCEBEB", text:"#791F1F", btn:"#F09595" },
+  "Solucionado":              { bg:"#EAF3DE", text:"#27500A", btn:"#C0DD97" },
+  "Cancelado":                { bg:"#FAECE7", text:"#712B13", btn:"#F0997B" },
+};
+const ECOLOR_DARK = {
+  "Nuevo pedido":             { bg:"#1a2210", text:"#A8E870", btn:"#3a5220" },
+  "En preparación":           { bg:"#261a06", text:"#FFD070", btn:"#4a3210" },
+  "Enviado / en tránsito":    { bg:"#142236", text:"#82CFFF", btn:"#1e3a58" },
+  "Entregado":                { bg:"#0f2210", text:"#6EE87A", btn:"#1e4220" },
+  "Albarán enviado":          { bg:"#0a2418", text:"#3EEFC0", btn:"#0f3828" },
+  "Facturado":                { bg:"#1a1640", text:"#A89AFF", btn:"#2e2870" },
+  "Pendiente de pago":        { bg:"#2a1008", text:"#FF9060", btn:"#4a2010" },
+  "Pagado":                   { bg:"#0f2210", text:"#88E870", btn:"#1e4020" },
+  "En garantía / incidencia": { bg:"#2a0808", text:"#FF7070", btn:"#4a1010" },
+  "Solucionado":              { bg:"#0f2210", text:"#6EE87A", btn:"#1e4220" },
+  "Cancelado":                { bg:"#2a1008", text:"#FF9060", btn:"#4a2010" },
+};
+const getECOLOR = (dark) => dark ? ECOLOR_DARK : ECOLOR_LIGHT;
+
+const getSECTION = (dark) => dark ? {
+  nuevos:      { label:"Nuevos pedidos pendientes", bg:OL.neon50,  border:OL.neon200, dot:OL.neon600, text:OL.neon600, cBg:OL.neon600, cText:"#050805", pulse:true  },
+  curso:       { label:"Pedidos en curso",          bg:"#0a2418",  border:"#1e5038",  dot:"#3EEFC0",  text:"#3EEFC0", cBg:"#3EEFC0",  cText:"#051810", pulse:false },
+  finalizados: { label:"Finalizados y cancelados",  bg:"#1e0e06",  border:"#3e2010",  dot:"#FF9060",  text:"#FF9060", cBg:"#FF9060",  cText:"#100502", pulse:false },
+} : {
+  nuevos:      { label:"Nuevos pedidos pendientes", bg:OL[50],    border:OL[200],   dot:OL[600],    text:OL[800],   cBg:OL[800],   cText:OL[50],    pulse:true  },
+  curso:       { label:"Pedidos en curso",          bg:"#E1F5EE", border:"#9FE1CB", dot:"#1D9E75",  text:"#085041", cBg:"#085041", cText:"#E1F5EE", pulse:false },
+  finalizados: { label:"Finalizados y cancelados",  bg:"#FAECE7", border:"#F0997B", dot:"#D85A30",  text:"#712B13", cBg:"#712B13", cText:"#FAECE7", pulse:false },
+};
 
 /* ─── Constantes ─────────────────────────────────────────────────────────── */
 const ROLES = {
@@ -26,24 +81,6 @@ const ROLES = {
 const CATEGORIAS = ["Ordenador","Periférico","Teléfono","Tablet","Accesorio","Otro"];
 const ESTADOS_PROVEEDOR_POST = ["Albarán enviado","Facturado","Pendiente de pago","Pagado","En garantía / incidencia","Solucionado"];
 const ESTADOS = ["Nuevo pedido","En preparación","Enviado / en tránsito","Entregado","Albarán enviado","Facturado","Pendiente de pago","Pagado","En garantía / incidencia","Solucionado","Cancelado"];
-const ECOLOR = {
-  "Nuevo pedido":             { bg:OL[50],    text:OL[800], btn:OL[200] },
-  "En preparación":           { bg:"#FAEEDA", text:"#633806", btn:"#FAC775" },
-  "Enviado / en tránsito":    { bg:OL[100],   text:OL[800],  btn:OL[400] },
-  "Entregado":                { bg:"#EAF3DE", text:"#27500A", btn:"#97C459" },
-  "Albarán enviado":          { bg:"#E1F5EE", text:"#085041", btn:"#9FE1CB" },
-  "Facturado":                { bg:"#EEEDFE", text:"#534AB7", btn:"#7F77DD" },
-  "Pendiente de pago":        { bg:"#FAECE7", text:"#712B13", btn:"#F0997B" },
-  "Pagado":                   { bg:"#EAF3DE", text:"#3B6D11", btn:"#C0DD97" },
-  "En garantía / incidencia": { bg:"#FCEBEB", text:"#791F1F", btn:"#F09595" },
-  "Solucionado":              { bg:"#EAF3DE", text:"#27500A", btn:"#C0DD97" },
-  "Cancelado":                { bg:"#FAECE7", text:"#712B13", btn:"#F0997B" },
-};
-const SECTION = {
-  nuevos:      { label:"Nuevos pedidos pendientes", bg:OL[50],    border:OL[200],   dot:OL[600],    text:OL[800],   cBg:OL[800],   cText:OL[50],    pulse:true  },
-  curso:       { label:"Pedidos en curso",          bg:"#E1F5EE", border:"#9FE1CB", dot:"#1D9E75",  text:"#085041", cBg:"#085041", cText:"#E1F5EE", pulse:false },
-  finalizados: { label:"Finalizados y cancelados",  bg:"#FAECE7", border:"#F0997B", dot:"#D85A30",  text:"#712B13", cBg:"#712B13", cText:"#FAECE7", pulse:false },
-};
 
 /* ─── Utilidades ─────────────────────────────────────────────────────────── */
 const fmtDate     = ()   => { const d=new Date(); return `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`; };
@@ -75,20 +112,27 @@ const nextStates = (role,cur) => ESTADOS.filter(s=>s!==cur&&canTransition(role,c
 
 /* ─── Tokens por modo ────────────────────────────────────────────────────── */
 const makeT = (dark) => ({
-  bg:        dark ? OL.darkBg    : "#f5f5f3",
-  surface:   dark ? OL.darkSurf  : "#ffffff",
-  surf2:     dark ? OL.darkSurf2 : OL[50],
-  t1:        dark ? "#e8e8e4"    : "#1a1a14",
-  t2:        dark ? "#9a9d8e"    : "#5e6354",
-  t3:        dark ? "#5a5e50"    : "#9a9d8e",
-  border:    dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)",
-  borderM:   dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.13)",
-  sidebarBg: dark ? OL.darkSidebar : "#ffffff",
+  bg:         dark ? OL.darkBg      : "#f5f5f3",
+  surface:    dark ? OL.darkSurf    : "#ffffff",
+  surf2:      dark ? OL.darkSurf2   : OL[50],
+  t1:         dark ? "#e8e8e4"      : "#1a1a14",
+  t2:         dark ? "#9a9d8e"      : "#5e6354",
+  t3:         dark ? "#5a5e50"      : "#9a9d8e",
+  border:     dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)",
+  borderM:    dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.13)",
+  sidebarBg:  dark ? OL.darkSidebar : "#ffffff",
+  // acento: neón en dark, corporativo en light
+  accent:     dark ? OL.neon600  : OL[600],
+  accentBg:   dark ? OL.neon50   : OL[50],
+  accentText: dark ? OL.neon600  : OL[800],
+  accentBorder:dark? OL.neon200  : OL[200],
+  dark,
 });
 
 /* ─── Átomos ─────────────────────────────────────────────────────────────── */
-const Pill = ({estado}) => {
-  const c=ECOLOR[estado]||{bg:"#F1EFE8",text:"#444441"};
+const Pill = ({estado,dark=false}) => {
+  const ec=getECOLOR(dark);
+  const c=ec[estado]||{bg:"#F1EFE8",text:"#444441"};
   return <span style={{background:c.bg,color:c.text,fontSize:11,fontWeight:500,padding:"3px 10px",borderRadius:20,whiteSpace:"nowrap",display:"inline-block"}}>{estado}</span>;
 };
 const Avatar = ({name,role,size=32}) => {
@@ -100,9 +144,9 @@ const RoleBadge = ({role}) => {
   const r=ROLES[role]||ROLES.empleado;
   return <span style={{background:r.bg,color:r.text,fontSize:10,fontWeight:500,padding:"2px 8px",borderRadius:20}}>{r.label}</span>;
 };
-const Toast = ({msg,type}) => (
-  <div style={{position:"fixed",top:16,right:16,zIndex:9999,background:type==="ok"?OL[50]:"#FCEBEB",color:type==="ok"?OL[800]:"#791F1F",padding:"10px 18px",borderRadius:10,fontSize:13,fontWeight:500,border:`0.5px solid ${type==="ok"?OL[200]:"#F09595"}`,display:"flex",alignItems:"center",gap:8}}>
-    <span style={{width:7,height:7,borderRadius:"50%",background:type==="ok"?OL[600]:"#E24B4A",display:"inline-block",flexShrink:0}}></span>
+const Toast = ({msg,type,T}) => (
+  <div style={{position:"fixed",top:16,right:16,zIndex:9999,background:type==="ok"?T.accentBg:"#FCEBEB",color:type==="ok"?T.accentText:"#791F1F",padding:"10px 18px",borderRadius:10,fontSize:13,fontWeight:500,border:`0.5px solid ${type==="ok"?T.accentBorder:"#F09595"}`,display:"flex",alignItems:"center",gap:8}}>
+    <span style={{width:7,height:7,borderRadius:"50%",background:type==="ok"?T.accent:"#E24B4A",display:"inline-block",flexShrink:0}}></span>
     {msg}
   </div>
 );
@@ -123,26 +167,27 @@ const Spinner = ({T}) => (
   </div>
 );
 const SearchIcon = () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>;
-const PulseBar = () => (
+const PulseBar = ({T}) => (
   <>
     <style>{`@keyframes bPulse{0%,100%{opacity:1;width:5px}50%{opacity:.7;width:8px}}`}</style>
-    <div style={{position:"absolute",left:0,top:0,bottom:0,width:5,borderRadius:"10px 0 0 10px",background:OL[600],animation:"bPulse 1.2s ease-in-out infinite"}}/>
+    <div style={{position:"absolute",left:0,top:0,bottom:0,width:5,borderRadius:"10px 0 0 10px",background:T.accent,animation:"bPulse 1.2s ease-in-out infinite"}}/>
   </>
 );
 
 /* ─── Botones ────────────────────────────────────────────────────────────── */
-const mkBtnPrimary = () => ({background:OL[600],color:"#fff",border:"none",borderRadius:8,padding:"7px 16px",fontSize:13,fontWeight:500,cursor:"pointer"});
+const mkBtnPrimary = (T) => ({background:T.accent,color:T.dark?"#050a03":"#fff",border:"none",borderRadius:8,padding:"7px 16px",fontSize:13,fontWeight:500,cursor:"pointer"});
 const mkBtnGhost   = (T) => ({background:"transparent",border:`0.5px solid ${T.border}`,borderRadius:8,padding:"7px 14px",fontSize:13,cursor:"pointer",color:T.t2});
 const mkBtnDanger  = ()  => ({background:"transparent",border:"0.5px solid #F09595",borderRadius:8,padding:"7px 14px",fontSize:13,cursor:"pointer",color:"#791F1F"});
 const mkInp        = (T) => ({padding:"8px 10px",borderRadius:8,border:`0.5px solid ${T.borderM}`,fontSize:13,background:T.surface,color:T.t1,width:"100%",outline:"none"});
 
 /* ─── SectionHead ────────────────────────────────────────────────────────── */
-function SectionHead({s,count,collapsed,onToggle,pulsing}) {
+function SectionHead({sKey,count,collapsed,onToggle,pulsing,dark=false}) {
+  const s=getSECTION(dark)[sKey];
   return (
     <>
       {pulsing && <style>{`@keyframes hPulse{0%,100%{opacity:1}50%{opacity:.75}}`}</style>}
       <div onClick={onToggle} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderRadius:10,background:s.bg,border:`0.5px solid ${s.border}`,cursor:"pointer",userSelect:"none",animation:pulsing?"hPulse 1.6s ease-in-out infinite":"none",marginBottom:collapsed?0:10,transition:"margin .2s"}}>
-        <span style={{width:8,height:8,borderRadius:"50%",background:s.dot,display:"inline-block",flexShrink:0}}></span>
+        <span style={{width:8,height:8,borderRadius:"50%",background:s.dot,display:"inline-block",flexShrink:0,boxShadow:dark?`0 0 6px ${s.dot}`:"none"}}></span>
         <span style={{fontSize:13,fontWeight:500,color:s.text,flex:1}}>{s.label}</span>
         <span style={{background:s.cBg,color:s.cText,fontSize:11,fontWeight:500,padding:"2px 9px",borderRadius:20,marginRight:4}}>{count}</span>
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke={s.text} strokeWidth="1.8" style={{transform:collapsed?"rotate(-90deg)":"rotate(0deg)",transition:"transform .2s",opacity:.7}}>
@@ -438,11 +483,11 @@ function Dashboard({user,orders,T}) {
             <SL>Resumen por estado</SL>
             <Card><div style={{padding:"12px 14px"}}>
               {estadoCounts.map(({e,n})=>{
-                const c=ECOLOR[e]||{bg:"#F1EFE8",text:"#444441"};
+                const c=getECOLOR(T.dark)[e]||{bg:"#F1EFE8",text:"#444441"};
                 return (
                   <div key={e} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}>
                     <span style={{background:c.bg,color:c.text,fontSize:10,fontWeight:500,padding:"2px 7px",borderRadius:20,whiteSpace:"nowrap",minWidth:110,display:"inline-block",textAlign:"center"}}>{e}</span>
-                    <div style={{flex:1,height:5,borderRadius:3,background:T.surf2,overflow:"hidden"}}><div style={{width:`${(n/maxN)*100}%`,height:"100%",borderRadius:3,background:c.text,opacity:.5}}/></div>
+                    <div style={{flex:1,height:5,borderRadius:3,background:T.surf2,overflow:"hidden"}}><div style={{width:`${(n/maxN)*100}%`,height:"100%",borderRadius:3,background:c.text,opacity:T.dark?.8:.5,boxShadow:T.dark?`0 0 4px ${c.text}`:"none"}}/></div>
                     <span style={{fontSize:11,fontWeight:500,color:T.t1,minWidth:14,textAlign:"right"}}>{n}</span>
                   </div>
                 );
@@ -456,7 +501,7 @@ function Dashboard({user,orders,T}) {
               <div key={o.id} style={{display:"flex",alignItems:"center",gap:8,padding:"7px 12px",borderBottom:i<3?`0.5px solid ${T.border}`:"none"}}>
                 <Avatar name={o.solicitante} role="empleado" size={22}/>
                 <div style={{flex:1,minWidth:0,fontSize:11,color:T.t1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.solicitante} — {o.producto}</div>
-                <Pill estado={o.estado}/>
+                <Pill estado={o.estado} dark={T.dark}/>
               </div>
             ))}{orders.length===0&&<div style={{padding:"12px",fontSize:12,color:T.t3}}>Sin pedidos</div>}</Card>
           </div>
@@ -468,8 +513,9 @@ function Dashboard({user,orders,T}) {
 
 /* ─── EstadoModal ────────────────────────────────────────────────────────── */
 function EstadoModal({order:o,next,T,onSelect,onClose}) {
+  const EC=getECOLOR(T.dark);
   return (
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center"}}>
       <div onClick={e=>e.stopPropagation()} style={{background:T.surface,borderRadius:16,padding:"1.75rem",width:"100%",maxWidth:420,border:`0.5px solid ${T.borderM}`}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
           <div>
@@ -481,13 +527,13 @@ function EstadoModal({order:o,next,T,onSelect,onClose}) {
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {next.map(s=>{
-            const c=ECOLOR[s];
+            const c=EC[s]||{bg:T.surf2,text:T.t1,btn:T.border};
             return (
               <button key={s} onClick={()=>{onSelect(s);onClose();}}
-                style={{width:"100%",padding:"12px 16px",borderRadius:10,border:`1px solid ${c.btn}`,background:c.bg,color:c.text,fontSize:14,fontWeight:500,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"transform .1s"}}
+                style={{width:"100%",padding:"12px 16px",borderRadius:10,border:`1px solid ${c.btn}`,background:c.bg,color:c.text,fontSize:14,fontWeight:500,cursor:"pointer",display:"flex",alignItems:"center",gap:10,transition:"transform .1s",boxShadow:T.dark?`0 0 8px ${c.btn}33`:"none"}}
                 onMouseEnter={e=>e.currentTarget.style.transform="scale(1.01)"}
                 onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
-                <span style={{width:8,height:8,borderRadius:"50%",background:c.btn,flexShrink:0}}></span>
+                <span style={{width:8,height:8,borderRadius:"50%",background:c.btn,flexShrink:0,boxShadow:T.dark?`0 0 5px ${c.btn}`:"none"}}></span>
                 {s}
               </button>
             );
@@ -504,20 +550,25 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
   const next=nextStates(user.role,o.estado);
   const [showEstado,setShowEstado]=useState(false);
   let bg,border;
-  if(highlight){bg=idx%2===0?OL[50]:OL[100];border=`1.5px solid ${OL[400]}`;}
-  else if(groupColors){bg=idx%2===0?groupColors.light:groupColors.dark;border=`0.5px solid ${groupColors.border}`;}
-  else{bg=idx%2===0?T.surface:T.surf2;border=`0.5px solid ${T.border}`;}
+  if(highlight){
+    bg=T.dark?(idx%2===0?OL.neon50:`${OL.neon50}cc`):( idx%2===0?OL[50]:OL[100]);
+    border=T.dark?`1.5px solid ${OL.neon200}`:`1.5px solid ${OL[400]}`;
+  } else if(groupColors){
+    bg=idx%2===0?groupColors.light:groupColors.dark;border=`0.5px solid ${groupColors.border}`;
+  } else {
+    bg=idx%2===0?T.surface:T.surf2;border=`0.5px solid ${T.border}`;
+  }
   return (
     <>
       {showEstado&&<EstadoModal order={o} next={next} T={T} onSelect={onChangeEstado} onClose={()=>setShowEstado(false)}/>}
       <div onClick={e=>{if(e.target.tagName==="BUTTON")return;if(next.length>0)setShowEstado(true);else onSelect();}}
         style={{background:bg,border,borderRadius:10,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",position:"relative",overflow:"hidden",cursor:"pointer",transition:"box-shadow .15s"}}
-        onMouseEnter={e=>e.currentTarget.style.boxShadow="0 2px 10px rgba(0,0,0,0.05)"}
+        onMouseEnter={e=>e.currentTarget.style.boxShadow=T.dark?`0 2px 12px ${OL.neon600}22`:"0 2px 10px rgba(0,0,0,0.05)"}
         onMouseLeave={e=>e.currentTarget.style.boxShadow="none"}>
-        {highlight&&<PulseBar/>}
+        {highlight&&<PulseBar T={T}/>}
         <div style={{width:74,fontSize:11,fontWeight:500,color:T.t3,fontFamily:"monospace",flexShrink:0}}>{o.id}</div>
         <div style={{flex:1,minWidth:140}}>
-          <div style={{fontSize:13,fontWeight:500,color:highlight?OL[800]:T.t1,marginBottom:1}}>{o.producto}</div>
+          <div style={{fontSize:13,fontWeight:500,color:highlight?T.accentText:T.t1,marginBottom:1}}>{o.producto}</div>
           <div style={{fontSize:11,color:T.t3}}>{o.categoria} · {o.cantidad} ud.{o.precio?` · €${(o.precio*o.cantidad).toLocaleString("es-ES")}`:""}</div>
         </div>
         {["admin","proveedor","responsable"].includes(user.role)&&(
@@ -526,9 +577,11 @@ function OrderRow({order:o,user,idx,highlight,T,groupColors,onSelect,onChangeEst
             <span style={{fontSize:12,color:T.t2}}>{o.solicitante}</span>
           </div>
         )}
-        <div style={{minWidth:80}}><Pill estado={o.estado}/></div>
+        <div style={{minWidth:80}}><Pill estado={o.estado} dark={T.dark}/></div>
         <div style={{fontSize:11,color:T.t3,minWidth:96}}>
-          {o.estado==="Entregado"&&o.fechaEntrega?<span style={{color:"#27500A",fontWeight:500}}>Entregado {o.fechaEntrega}</span>:o.fechaEstimada?`Est. ${o.fechaEstimada}`:"—"}
+          {o.estado==="Entregado"&&o.fechaEntrega
+            ? <span style={{color:T.dark?"#6EE87A":"#27500A",fontWeight:500}}>Entregado {o.fechaEntrega}</span>
+            : o.fechaEstimada?`Est. ${o.fechaEstimada}`:"—"}
         </div>
         <button onClick={e=>{e.stopPropagation();onSelect();}} style={{fontSize:12,padding:"5px 12px",borderRadius:8,border:`0.5px solid ${T.border}`,background:T.surface,color:T.t2,cursor:"pointer"}}>Ver</button>
       </div>
@@ -595,8 +648,8 @@ function DetailPanel({order:o,user,T,onClose,onUpdate,onDelete,onChangeEstado}) 
           </div>
         )}
         <div style={{display:"flex",gap:8,marginTop:"auto",paddingTop:16,borderTop:`0.5px solid ${T.border}`}}>
-          {canEdit&&!editing&&<button onClick={()=>setEditing(true)} style={mkBtnPrimary()}>Editar</button>}
-          {editing&&<button onClick={save} style={mkBtnPrimary()}>Guardar</button>}
+          {canEdit&&!editing&&<button onClick={()=>setEditing(true)} style={mkBtnPrimary(T)}>Editar</button>}
+          {editing&&<button onClick={save} style={mkBtnPrimary(T)}>Guardar</button>}
           {editing&&<button onClick={()=>{setForm({...o});setEditing(false);}} style={mkBtnGhost(T)}>Cancelar</button>}
           {user.role==="admin"&&!editing&&<button onClick={onDelete} style={mkBtnDanger()}>Eliminar</button>}
         </div>
@@ -628,7 +681,7 @@ function NewOrderModal({user,T,onClose,onCreate}) {
         <div style={{marginBottom:20}}><FL>Notas</FL><textarea value={form.notas} onChange={e=>f("notas",e.target.value)} rows={3} style={{...inp,resize:"vertical",height:"auto"}}/></div>
         {form.precio>0&&form.cantidad>0&&<div style={{background:OL[50],borderRadius:8,padding:"10px 14px",marginBottom:16}}><span style={{fontSize:12,color:OL[800]}}>Importe total: </span><span style={{fontSize:14,fontWeight:500,color:OL[800]}}>€{(form.precio*form.cantidad).toLocaleString("es-ES")}</span></div>}
         <div style={{display:"flex",gap:8}}>
-          <button disabled={!valid||saving} onClick={handle} style={{...mkBtnPrimary(),opacity:valid&&!saving?1:.5,cursor:valid&&!saving?"pointer":"not-allowed"}}>{saving?"Guardando…":"Crear pedido"}</button>
+          <button disabled={!valid||saving} onClick={handle} style={{...mkBtnPrimary(T),opacity:valid&&!saving?1:.5,cursor:valid&&!saving?"pointer":"not-allowed"}}>{saving?"Guardando…":"Crear pedido"}</button>
           <button onClick={onClose} style={mkBtnGhost(T)}>Cancelar</button>
         </div>
       </div>
@@ -646,7 +699,7 @@ function UsersPanel({users,currentUser,T,onNew,onEdit,onDelete}) {
     <div>
       <div style={{display:"flex",gap:10,marginBottom:12,alignItems:"center"}}>
         <div style={{flex:1,position:"relative"}}><div style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",color:T.t3,pointerEvents:"none"}}><SearchIcon/></div><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar usuario…" style={{...inp,paddingLeft:32}}/></div>
-        <button onClick={onNew} style={mkBtnPrimary()}>+ Nuevo usuario</button>
+        <button onClick={onNew} style={mkBtnPrimary(T)}>+ Nuevo usuario</button>
       </div>
       <div style={{background:"#FAEEDA",border:"0.5px solid #FAC775",borderRadius:10,padding:"10px 14px",marginBottom:16,fontSize:12,color:"#633806"}}>Para crear usuarios nuevos ve a <strong>Supabase → SQL Editor</strong> y ejecuta los comandos proporcionados.</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:10}}>
@@ -741,7 +794,7 @@ function UserModal({userData,T,onSave,onClose}) {
           </div>
         </div>}
         <div style={{display:"flex",gap:8}}>
-          <button disabled={!valid||saving} onClick={handleSave} style={{...mkBtnPrimary(),opacity:valid&&!saving?1:.5,cursor:valid&&!saving?"pointer":"not-allowed"}}>{saving?"Guardando…":userData?"Guardar cambios":"Crear usuario"}</button>
+          <button disabled={!valid||saving} onClick={handleSave} style={{...mkBtnPrimary(T),opacity:valid&&!saving?1:.5,cursor:valid&&!saving?"pointer":"not-allowed"}}>{saving?"Guardando…":userData?"Guardar cambios":"Crear usuario"}</button>
           <button onClick={onClose} style={mkBtnGhost(T)}>Cancelar</button>
         </div>
       </div>
@@ -778,7 +831,7 @@ function LoginForm({T,onLogin}) {
       </div>
       {error&&<div style={{fontSize:12,color:"#791F1F",background:"#FCEBEB",padding:"8px 12px",borderRadius:8,marginTop:8,border:"0.5px solid #F09595"}}>{error}</div>}
       <div style={{marginBottom:20}}/>
-      <button onClick={handleLogin} disabled={loading} style={{...mkBtnPrimary(),width:"100%",padding:"11px",borderRadius:10,fontSize:14,opacity:loading?.7:1}}>{loading?"Entrando…":"Entrar"}</button>
+      <button onClick={handleLogin} disabled={loading} style={{...mkBtnPrimary(T),width:"100%",padding:"11px",borderRadius:10,fontSize:14,opacity:loading?.7:1}}>{loading?"Entrando…":"Entrar"}</button>
     </div>
   );
 }
@@ -946,7 +999,7 @@ export default function App() {
 
   return (
     <div style={{minHeight:"100vh",background:T.bg,fontFamily:"'Inter',system-ui,sans-serif",display:"flex"}}>
-      {toast&&<Toast {...toast}/>}
+      {toast&&<Toast {...toast} T={T}/>}
       <Sidebar user={user} tab={tab} onTab={handleSidebarTab} pendingCount={pendingCount} T={T}/>
       <div style={{flex:1,minWidth:0,display:"flex",flexDirection:"column"}}>
         {/* Topbar delgado */}
@@ -971,20 +1024,25 @@ export default function App() {
                 </div>
                 <select value={filterEstado} onChange={e=>setFilterEstado(e.target.value)} style={selInp}><option>Todos</option>{ESTADOS.map(e=><option key={e}>{e}</option>)}</select>
                 <select value={filterCat} onChange={e=>setFilterCat(e.target.value)} style={selInp}><option>Todas</option>{CATEGORIAS.map(c=><option key={c}>{c}</option>)}</select>
-                {(user.role==="empleado"||user.role==="admin")&&<button onClick={()=>setShowForm(true)} style={mkBtnPrimary()}>+ Nuevo pedido</button>}
+                {(user.role==="empleado"||user.role==="admin")&&<button onClick={()=>setShowForm(true)} style={mkBtnPrimary(T)}>+ Nuevo pedido</button>}
               </div>
-              {["admin","proveedor"].includes(user.role)&&(
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8,marginBottom:16}}>
-                  {[{label:"Nuevos",val:orders.filter(o=>o.estado==="Nuevo pedido").length,bg:OL[50],text:OL[800]},{label:"En preparación",val:orders.filter(o=>o.estado==="En preparación").length,bg:"#FAEEDA",text:"#633806"},{label:"En tránsito",val:orders.filter(o=>o.estado==="Enviado / en tránsito").length,bg:OL[100],text:OL[800]},{label:"Entregados",val:orders.filter(o=>o.estado==="Entregado").length,bg:"#EAF3DE",text:"#27500A"}].map(s=>(
-                    <div key={s.label} style={{background:s.bg,borderRadius:10,padding:"12px 14px",border:`0.5px solid ${T.border}`}}><div style={{fontSize:11,color:s.text,marginBottom:4,fontWeight:500}}>{s.label}</div><div style={{fontSize:20,fontWeight:500,color:s.text}}>{s.val}</div></div>
-                  ))}
-                </div>
-              )}
+              {["admin","proveedor"].includes(user.role)&&(()=>{
+                const SC=getECOLOR(T.dark);
+                const statCards=T.dark
+                  ?[{label:"Nuevos",estado:"Nuevo pedido"},{label:"En preparación",estado:"En preparación"},{label:"En tránsito",estado:"Enviado / en tránsito"},{label:"Entregados",estado:"Entregado"}]
+                  :null;
+                return <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8,marginBottom:16}}>
+                  {(statCards||[{label:"Nuevos",estado:"Nuevo pedido"},{label:"En preparación",estado:"En preparación"},{label:"En tránsito",estado:"Enviado / en tránsito"},{label:"Entregados",estado:"Entregado"}]).map(s=>{
+                    const c=SC[s.estado]||{bg:T.surf2,text:T.t2};
+                    return <div key={s.label} style={{background:c.bg,borderRadius:10,padding:"12px 14px",border:`0.5px solid ${T.dark?c.btn||T.border:T.border}`,boxShadow:T.dark?`0 0 8px ${c.bg}88`:"none"}}><div style={{fontSize:11,color:c.text,marginBottom:4,fontWeight:500}}>{s.label}</div><div style={{fontSize:20,fontWeight:500,color:c.text}}>{orders.filter(o=>o.estado===s.estado).length}</div></div>;
+                  })}
+                </div>;
+              })()}
               {loading?<Spinner T={T}/>:<>
                 {visible.length===0&&<div style={{textAlign:"center",padding:"4rem",color:T.t3,fontSize:14}}>No hay pedidos que mostrar</div>}
-                {nuevos.length>0&&<div style={{marginBottom:20}}><SectionHead s={SECTION.nuevos} count={nuevos.length} collapsed={collapsed.nuevos} onToggle={()=>toggle("nuevos")} pulsing/>{!collapsed.nuevos&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{nuevos.map((o,i)=><OrderRow key={o.id} {...rp(o,i,true)}/>)}</div>}</div>}
-                {enCurso.length>0&&<div style={{marginBottom:20}}><SectionHead s={SECTION.curso} count={enCurso.length} collapsed={collapsed.curso} onToggle={()=>toggle("curso")} pulsing={false}/>{!collapsed.curso&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{enCurso.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,{light:"#E1F5EE",dark:"#D0EDE0",border:"#9FE1CB"})}/>)}</div>}</div>}
-                {finalizados.length>0&&<div><SectionHead s={SECTION.finalizados} count={finalizados.length} collapsed={collapsed.finalizados} onToggle={()=>toggle("finalizados")} pulsing={false}/>{!collapsed.finalizados&&<div style={{display:"flex",flexDirection:"column",gap:8,opacity:.65,filter:"saturate(.6)"}}>{finalizados.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,{light:"#FAECE7",dark:"#F5C4B3",border:"#F0997B"})}/>)}</div>}</div>}
+                {nuevos.length>0&&<div style={{marginBottom:20}}><SectionHead sKey="nuevos" count={nuevos.length} collapsed={collapsed.nuevos} onToggle={()=>toggle("nuevos")} pulsing dark={T.dark}/>{!collapsed.nuevos&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{nuevos.map((o,i)=><OrderRow key={o.id} {...rp(o,i,true)}/>)}</div>}</div>}
+                {enCurso.length>0&&<div style={{marginBottom:20}}><SectionHead sKey="curso" count={enCurso.length} collapsed={collapsed.curso} onToggle={()=>toggle("curso")} pulsing={false} dark={T.dark}/>{!collapsed.curso&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{enCurso.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,T.dark?{light:"#0a2418",dark:"#0d2c1e",border:"#1e5038"}:{light:"#E1F5EE",dark:"#D0EDE0",border:"#9FE1CB"})}/>)}</div>}</div>}
+                {finalizados.length>0&&<div><SectionHead sKey="finalizados" count={finalizados.length} collapsed={collapsed.finalizados} onToggle={()=>toggle("finalizados")} pulsing={false} dark={T.dark}/>{!collapsed.finalizados&&<div style={{display:"flex",flexDirection:"column",gap:8,opacity:.75}}>{finalizados.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,T.dark?{light:"#1e0e06",dark:"#261208",border:"#3e2010"}:{light:"#FAECE7",dark:"#F5C4B3",border:"#F0997B"})}/>)}</div>}</div>}
               </>}
             </div>
           )}
