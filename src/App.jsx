@@ -32,50 +32,52 @@ const EMPRESAS_LISTA = ["Ubesol","Maverick","Izzon"];
 let OL = {...EMPRESAS.Ubesol};
 const setEmpresaPaleta = (empresa) => { OL = {...(EMPRESAS[empresa]||EMPRESAS.Ubesol)}; };
 
-/* ─── Colores de estado (light vs dark/neón) ─────────────────────────────── */
+/* ─── Colores de estado — 100% dinámicos según empresa activa ────────────── */
 const getECOLOR_LIGHT = () => ({
-  // colores fijos de estado (neutros por estado, no por empresa)
-  // "Nuevo pedido" y "Enviado/tránsito" usan OL activo
-  __dummy:null,
-});
-const getECOLOR_LIGHT = () => ({
+  // Estados activos: todos en tonos de la empresa
   "Nuevo pedido":             { bg:OL[50],  text:OL[800], btn:OL[200] },
-  "En preparación":           { bg:OL[50],  text:OL[800], btn:OL[200] },
+  "En preparación":           { bg:OL[100], text:OL[800], btn:OL[400] },
   "Enviado / en tránsito":    { bg:OL[100], text:OL[800], btn:OL[400] },
-  "Entregado":                { bg:"#EAF3DE", text:"#27500A", btn:"#97C459" },
-  "Albarán enviado":          { bg:"#E1F5EE", text:"#085041", btn:"#9FE1CB" },
-  "Facturado":                { bg:"#EEEDFE", text:"#534AB7", btn:"#7F77DD" },
-  "Pendiente de pago":        { bg:"#FAECE7", text:"#712B13", btn:"#F0997B" },
-  "Pagado":                   { bg:"#EAF3DE", text:"#3B6D11", btn:"#C0DD97" },
+  "Entregado":                { bg:OL[50],  text:OL[600], btn:OL[200] },
+  "Albarán enviado":          { bg:OL[50],  text:OL[800], btn:OL[200] },
+  "Facturado":                { bg:OL[100], text:OL[800], btn:OL[400] },
+  "Pendiente de pago":        { bg:OL[50],  text:OL[600], btn:OL[200] },
+  "Pagado":                   { bg:OL[100], text:OL[800], btn:OL[400] },
+  // Estados de error: rojo semántico siempre
   "En garantía / incidencia": { bg:"#FCEBEB", text:"#791F1F", btn:"#F09595" },
-  "Solucionado":              { bg:"#EAF3DE", text:"#27500A", btn:"#C0DD97" },
-  "Cancelado":                { bg:"#FAECE7", text:"#712B13", btn:"#F0997B" },
+  "Solucionado":              { bg:OL[50],  text:OL[600], btn:OL[200] },
+  "Cancelado":                { bg:"#FCEBEB", text:"#791F1F", btn:"#F09595" },
 });
-// ECOLOR_LIGHT como alias estático (solo para compatibilidad inicial; en render usar getECOLOR)
-const ECOLOR_LIGHT = getECOLOR_LIGHT();
-const ECOLOR_DARK = {
-  "Nuevo pedido":             { bg:"#1a2210", text:"#A8E870", btn:"#3a5220" },
-  "En preparación":           { bg:"#261a06", text:"#FFD070", btn:"#4a3210" },
-  "Enviado / en tránsito":    { bg:"#142236", text:"#82CFFF", btn:"#1e3a58" },
-  "Entregado":                { bg:"#0f2210", text:"#6EE87A", btn:"#1e4220" },
-  "Albarán enviado":          { bg:"#0a2418", text:"#3EEFC0", btn:"#0f3828" },
-  "Facturado":                { bg:"#1a1640", text:"#A89AFF", btn:"#2e2870" },
-  "Pendiente de pago":        { bg:"#2a1008", text:"#FF9060", btn:"#4a2010" },
-  "Pagado":                   { bg:"#0f2210", text:"#88E870", btn:"#1e4020" },
+
+const getECOLOR_DARK = () => ({
+  // Dark neón: fondo oscuro de empresa + texto neón de empresa
+  "Nuevo pedido":             { bg:OL.neon50, text:OL.neon600, btn:OL.neon200 },
+  "En preparación":           { bg:OL.neon50, text:OL.neon400, btn:OL.neon200 },
+  "Enviado / en tránsito":    { bg:OL.neon50, text:OL.neon400, btn:OL.neon200 },
+  "Entregado":                { bg:OL.neon50, text:OL.neon600, btn:OL.neon200 },
+  "Albarán enviado":          { bg:OL.neon50, text:OL.neon400, btn:OL.neon200 },
+  "Facturado":                { bg:OL.neon50, text:OL.neon600, btn:OL.neon200 },
+  "Pendiente de pago":        { bg:OL.neon50, text:OL.neon400, btn:OL.neon200 },
+  "Pagado":                   { bg:OL.neon50, text:OL.neon600, btn:OL.neon200 },
+  // Error: rojo neón
   "En garantía / incidencia": { bg:"#2a0808", text:"#FF7070", btn:"#4a1010" },
-  "Solucionado":              { bg:"#0f2210", text:"#6EE87A", btn:"#1e4220" },
-  "Cancelado":                { bg:"#2a1008", text:"#FF9060", btn:"#4a2010" },
-};
-const getECOLOR = (dark) => dark ? ECOLOR_DARK : getECOLOR_LIGHT();
+  "Solucionado":              { bg:OL.neon50, text:OL.neon600, btn:OL.neon200 },
+  "Cancelado":                { bg:"#2a0808", text:"#FF7070", btn:"#4a1010" },
+});
+
+const getECOLOR = (dark) => dark ? getECOLOR_DARK() : getECOLOR_LIGHT();
+// alias estático para compatibilidad (se sobreescribe en runtime)
+const ECOLOR_LIGHT = getECOLOR_LIGHT();
+const ECOLOR_DARK  = getECOLOR_DARK();
 
 const getSECTION = (T) => T.dark ? {
   nuevos:      { label:"Nuevos pedidos pendientes", bg:OL.neon50,       border:OL.neon200,      dot:OL.neon600,    text:OL.neon600,    cBg:OL.neon600,    cText:"#050805", pulse:true  },
   curso:       { label:"Pedidos en curso",          bg:T.accentBg,      border:T.accentBorder,  dot:T.accent,      text:T.accent,      cBg:T.accent,      cText:T.bg,      pulse:false },
-  finalizados: { label:"Finalizados y cancelados",  bg:"#1e0e06",       border:"#3e2010",       dot:"#FF9060",     text:"#FF9060",     cBg:"#FF9060",     cText:"#100502", pulse:false },
+  finalizados: { label:"Finalizados y cancelados",  bg:T.accentBg,      border:T.accentBorder,  dot:T.accent,      text:T.accent,      cBg:T.accent,      cText:T.bg,      pulse:false },
 } : {
   nuevos:      { label:"Nuevos pedidos pendientes", bg:T.accentBg,      border:T.accentBorder,  dot:T.accent,      text:T.accentText,  cBg:T.accentText,  cText:T.accentBg, pulse:true  },
   curso:       { label:"Pedidos en curso",          bg:T.accentBg,      border:T.accentBorder,  dot:T.accent,      text:T.accentText,  cBg:T.accentText,  cText:T.accentBg, pulse:false },
-  finalizados: { label:"Finalizados y cancelados",  bg:"#FAECE7",       border:"#F0997B",       dot:"#D85A30",     text:"#712B13",     cBg:"#712B13",     cText:"#FAECE7", pulse:false },
+  finalizados: { label:"Finalizados y cancelados",  bg:T.accentBg,      border:T.accentBorder,  dot:T.accent,      text:T.accentText,  cBg:T.accentText,  cText:T.accentBg, pulse:false },
 };
 
 /* ─── Constantes ─────────────────────────────────────────────────────────── */
@@ -318,7 +320,7 @@ function Dashboard({user,orders,T}) {
                 ? urgentes.slice(0,2).map(o=><AlertCard key={o.id} bg="#FCEBEB" border="#F09595" iconColor="#791F1F" title={`${o.id} en incidencia`} sub={o.producto} icon={<><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r=".6" fill="#791F1F"/></>}/>)
                 : null}
               {enTransito.slice(0,2).map(o=><AlertCard key={o.id} bg={T.accentBg} border={T.accentBorder} iconColor={T.accentText} title={`${o.id} en tránsito`} sub={`${o.producto}${o.fechaEstimada?" — est. "+o.fechaEstimada:""}`} icon={<><path d="M8 2v8M4 7l4 4 4-4"/><path d="M2 13h12"/></>}/>)}
-              {activos.filter(o=>!o.fechaEstimada).slice(0,1).map(o=><AlertCard key={o.id} bg="#FFF7E6" border="#F59E0B" iconColor="#B45309" title={`${o.id} sin fecha estimada`} sub={o.producto} icon={<><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M5 3V1M11 3V1M2 7h12"/></>}/>)}
+              {activos.filter(o=>!o.fechaEstimada).slice(0,1).map(o=><AlertCard key={o.id} bg={T.accentBg} border={T.accentBorder} iconColor={T.accentText} title={`${o.id} sin fecha estimada`} sub={o.producto} icon={<><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M5 3V1M11 3V1M2 7h12"/></>}/>)}
               {urgentes.length===0&&enTransito.length===0&&activos.filter(o=>!o.fechaEstimada).length===0&&<div style={{fontSize:12,color:T.t3,padding:"8px 0"}}>Sin alertas activas</div>}
             </div>
           </div>
@@ -366,7 +368,7 @@ function Dashboard({user,orders,T}) {
                     <div key={o.id} style={{background:T.surface,border:`0.5px solid ${T.border}`,borderRadius:10,padding:"10px 12px"}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
                         <div><div style={{fontSize:12,fontWeight:500,color:T.t1}}>{o.producto}</div><div style={{fontSize:10,color:T.t3}}>{o.solicitante} · {o.id}{o.precio?` · €${(o.precio*o.cantidad).toLocaleString("es-ES")}`:""}</div></div>
-                        {!o.fechaEstimada&&<span style={{background:"#FFF7E6",color:"#B45309",fontSize:10,fontWeight:500,padding:"2px 7px",borderRadius:20}}>Sin fecha</span>}
+                        {!o.fechaEstimada&&<span style={{background:T.accentBg,color:T.accentText,fontSize:10,fontWeight:500,padding:"2px 7px",borderRadius:20}}>Sin fecha</span>}
                       </div>
                       <div style={{display:"flex",gap:6}}>
                         <span style={{flex:1,fontSize:11,padding:"5px 0",borderRadius:7,border:`0.5px solid ${T.accentBorder}`,background:T.accentBg,color:T.accentText,cursor:"pointer",fontWeight:500,textAlign:"center"}}>Aprobar</span>
@@ -487,9 +489,9 @@ function Dashboard({user,orders,T}) {
           <SL>Alertas del sistema</SL>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {incids.length>0&&<AlertCard bg="#FCEBEB" border="#F09595" iconColor="#791F1F" title={`${incids.length} incidencia${incids.length>1?"s":""} sin resolver`} sub={incids.map(o=>o.id).join(", ")} icon={<><path d="M8 2L1 13h14L8 2z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".6" fill="#791F1F"/></>}/>}
-            {gastoTot/limite>.65&&<AlertCard bg="#FFF7E6" border="#F59E0B" iconColor="#B45309" title={`Presupuesto al ${((gastoTot/limite)*100).toFixed(0)}%`} sub={`Quedan €${(limite-gastoTot).toLocaleString("es-ES",{maximumFractionDigits:0})}`} icon={<><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r=".6" fill="#B45309"/></>}/>}
+            {gastoTot/limite>.65&&<AlertCard bg={T.accentBg} border={T.accentBorder} iconColor={T.accentText} title={`Presupuesto al ${((gastoTot/limite)*100).toFixed(0)}%`} sub={`Quedan €${(limite-gastoTot).toLocaleString("es-ES",{maximumFractionDigits:0})}`} icon={<><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r=".6" fill={T.accentText}/></>}/>}
             {pendAprov.length>0&&<AlertCard bg={T.accentBg} border={T.accentBorder} iconColor={T.accentText} title={`${pendAprov.length} pedido${pendAprov.length>1?"s":""} esperan aprobación`} sub={`Más antiguo: ${pendAprov[pendAprov.length-1]?.fechaSolicitud||"—"}`} icon={<><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="11"/><line x1="5" y1="8" x2="11" y2="8"/></>}/>}
-            {orders.filter(o=>o.estado==="Enviado / en tránsito"&&!o.tracking).length>0&&<AlertCard bg="#FFF7E6" border="#F59E0B" iconColor="#B45309" title="Pedidos en tránsito sin tracking" sub={orders.filter(o=>o.estado==="Enviado / en tránsito"&&!o.tracking).map(o=>o.id).join(", ")} icon={<><path d="M8 2v8M4 7l4 4 4-4"/><path d="M2 13h12"/></>}/>}
+            {orders.filter(o=>o.estado==="Enviado / en tránsito"&&!o.tracking).length>0&&<AlertCard bg={T.accentBg} border={T.accentBorder} iconColor={T.accentText} title="Pedidos en tránsito sin tracking" sub={orders.filter(o=>o.estado==="Enviado / en tránsito"&&!o.tracking).map(o=>o.id).join(", ")} icon={<><path d="M8 2v8M4 7l4 4 4-4"/><path d="M2 13h12"/></>}/>}
             {incids.length===0&&gastoTot/limite<=.65&&pendAprov.length===0&&<div style={{fontSize:12,color:T.t3,padding:"8px 0"}}>Sin alertas activas</div>}
           </div>
         </div>
@@ -1166,7 +1168,7 @@ export default function App() {
                 {visible.length===0&&<div style={{textAlign:"center",padding:"4rem",color:T.t3,fontSize:14}}>No hay pedidos que mostrar</div>}
                 {nuevos.length>0&&<div style={{marginBottom:20}}><SectionHead sKey="nuevos" count={nuevos.length} collapsed={collapsed.nuevos} onToggle={()=>toggle("nuevos")} pulsing T={T}/>{!collapsed.nuevos&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{nuevos.map((o,i)=><OrderRow key={o.id} {...rp(o,i,true)}/>)}</div>}</div>}
                 {enCurso.length>0&&<div style={{marginBottom:20}}><SectionHead sKey="curso" count={enCurso.length} collapsed={collapsed.curso} onToggle={()=>toggle("curso")} pulsing={false} T={T}/>{!collapsed.curso&&<div style={{display:"flex",flexDirection:"column",gap:8}}>{enCurso.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,{light:T.accentBg,dark:T.accentBg,border:T.accentBorder})}/>)}</div>}</div>}
-                {finalizados.length>0&&<div><SectionHead sKey="finalizados" count={finalizados.length} collapsed={collapsed.finalizados} onToggle={()=>toggle("finalizados")} pulsing={false} T={T}/>{!collapsed.finalizados&&<div style={{display:"flex",flexDirection:"column",gap:8,opacity:.75}}>{finalizados.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,T.dark?{light:"#1e0e06",dark:"#261208",border:"#3e2010"}:{light:"#FAECE7",dark:"#F5C4B3",border:"#F0997B"})}/>)}</div>}</div>}
+                {finalizados.length>0&&<div><SectionHead sKey="finalizados" count={finalizados.length} collapsed={collapsed.finalizados} onToggle={()=>toggle("finalizados")} pulsing={false} T={T}/>{!collapsed.finalizados&&<div style={{display:"flex",flexDirection:"column",gap:8,opacity:.75}}>{finalizados.map((o,i)=><OrderRow key={o.id} {...rp(o,i,false,{light:T.accentBg,dark:T.accentBg,border:T.accentBorder})}/>)}</div>}</div>}
               </>}
             </div>
           )}
